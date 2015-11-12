@@ -10,6 +10,7 @@
                  [re-frame "0.5.0"]
                  [figwheel "0.4.0"]
                  [reagent "0.5.1"]
+                 [org.clojure/tools.reader "1.0.0-alpha1"]
                  [garden "1.3.0-SNAPSHOT"]
                  [ring/ring-core "1.4.0"]]
   :plugins [[lein-cljsbuild "1.0.5"]
