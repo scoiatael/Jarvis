@@ -8,6 +8,7 @@
                               (= cljs.core/PersistentHashMap vty) :map
                               (= cljs.core/PersistentArrayMap vty) :map
                               (= cljs.core/List vty) :list
+                              (= cljs.core/EmptyList vty) :list
                               (= cljs.core/Symbol vty) :symbol
                               (= cljs.core/Keyword vty) :keyword
                               :else vty)))

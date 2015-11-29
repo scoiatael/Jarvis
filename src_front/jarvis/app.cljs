@@ -7,7 +7,7 @@
             [jarvis.render :as r]))
 
 (defn- render-code [active item index]
-  (let [rendered [r/render (-> item t/parse)]]
+  (let [rendered (r/render {:on-click #(s/set-active index)} (-> item t/parse))]
     (if (= active index)
       [rc/border
        :border "1px dashed red"
@@ -39,7 +39,12 @@
 
                              [rc/md-circle-icon-button
                               :md-icon-name "zmdi-plus"
-                              :on-click s/add-empty-node]]]
+                              :on-click s/add-empty-node]
+
+                             [rc/md-circle-icon-button
+                              :md-icon-name "zmdi-minus"
+                              :on-click s/pop-code
+                              :disabled? (> 2 (count codes))]]]
                  [v-box
                   :size "1"
                   :children [[box
