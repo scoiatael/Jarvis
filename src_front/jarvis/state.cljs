@@ -3,9 +3,9 @@
    [reagent.core :refer [atom]]
    [cljs.tools.reader.edn :as edn]))
 
-(defrecord JarvisState [nodes active error])
+(defrecord JarvisState [nodes active error modal])
 
-(defonce state (atom (JarvisState. [{:a 1 :b 2 :c '[1 2]}] 0 nil)))
+(defonce state (atom (JarvisState. [{:a 1 :b 2 :c '[1 2]}] 0 nil nil)))
 
 (defn active! []
   (or (:active @state) 0))
@@ -15,6 +15,9 @@
 
 (defn error! []
   (:error @state))
+
+(defn modal! []
+  (:modal @state))
 
 (defn code! []
   (nth (nodes!) (active!)))
@@ -36,14 +39,20 @@
   (update-fields
    [:error] (constantly e)))
 
+(defn set-modal [e]
+  (update-fields
+   [:modal] (constantly e)))
+
 (defn set-active [a]
   (update-fields
    [:active] (constantly a)))
 
 (defn reset-error [] (set-error nil))
 
-(defn push-code [code]
-  (let [active (active!)
+(defn reset-modal [] (set-modal nil))
+
+(defn push-code [code index]
+  (let [index (active!)
         old-code (code!)
         edn-code (try
                    (edn/read-string code)
@@ -52,7 +61,7 @@
                      (set-error e)
                      old-code))]
     (update-fields
-     [:nodes] #(assoc % active edn-code))))
+     [:nodes] #(assoc % index edn-code))))
 
 (defn almost-empty? []
   (< (count (nodes!)) 2))
