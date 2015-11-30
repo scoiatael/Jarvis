@@ -4,14 +4,16 @@
    [jarvis.pretty-print :as pp]))
 
 (defn- code-box [o code color]
-  (let [on-click (:on-click o)]
-    [:div
-     {:on-click on-click
-      :style {:border "solid 5px"
-              :border-color color
-              :height "100%"
-              :margin "1em"}}
-     code]))
+  (let [on-click (:on-click o)
+        on-hover (:on-hover o)]
+    [rc/box
+     :attr {:on-click on-click
+            :on-mouse-over on-hover}
+     :style {:border "solid 5px"
+             :border-color color
+             :height "100%"
+             :margin "1em"}
+     :child  code]))
 
 (def ^:private type->color {
                             :keyword "blue"
@@ -36,12 +38,25 @@
 
 ;; Recursive types
 (declare render)
-(defn- render-vector [o k] (code-box o (map (partial render o) k) (type->color :vector)))
-(defn- render-list [o k] (code-box o (map (partial render o) k) (type->color :list)))
+(defn- render-seq [o k c]
+  (code-box o [rc/h-box
+               :children (map (partial render o) k)] c))
+
+(defn- render-vector [o k] (render-seq o k (type->color :vector)))
+
+(defn- render-list [o k] (render-seq o k (type->color :list)))
+
 (defn- render-tuple [o k] (let [f (first k)
                               s (second k)]
-                          [:div (render o f) [:i {:class "zmdi zmdi-hc-fw-rc zmdi-arrow-right"}] (render o s)]))
-(defn- render-map [o k] (code-box o (map (partial render-tuple o) k) (type->color :map)))
+                            [rc/v-box
+                             :children [(render o f)
+                                        [rc/md-icon-button
+                                         :md-icon-name "zmdi-long-arrow-down"
+                                         :disabled? true]
+                                        (render o s)]]))
+
+(defn- render-map [o k] (code-box o [rc/h-box
+                                     :children (map (partial render-tuple o) k)] (type->color :map)))
 (defn- render-misc [o k t]
   (print "Unknown value" k " of " t)
   (code-box o (pp/pretty-print k) (type->color :misc)))

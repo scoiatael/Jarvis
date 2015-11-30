@@ -7,15 +7,13 @@
             [jarvis.render :as r]))
 
 (defn- render-code [active item index]
-  (let [rendered (r/render {:on-click #(s/set-active index)} (-> item t/parse))]
-    (if (= active index)
+  (let [rendered (r/render {:on-hover #(s/set-active index)} (-> item t/parse))]
       [rc/border
-       :border "1px dashed red"
-       :child rendered]
-      rendered)))
+       :border (str "1px dashed " (if (= active index) "red" "transparent"))
+       :child rendered]))
 
 (defn- render-codes [cs a]
-  [h-box
+  [v-box
    :children (map-indexed #(render-code a %2 %1) cs)])
 
 (defn- render-error [error]
@@ -30,10 +28,11 @@
         active (s/active!)
         code (nth codes active)]
     [h-box
-      :children [[box :size "200px" :child "Nav"]
-                 [box
-                  :size "1"
-                  :child [render-codes codes active]]
+     :style { :height "100%" }
+     :children [[box :size "200px" :child "Nav"]
+                [box
+                 :size "1"
+                 :child [render-codes codes active]]
                  [v-box
                   :children [[gap :size "1"]
 
