@@ -27,6 +27,7 @@
 
 (defn- render-codes [cs a]
   [v-box
+   :align :start
    :children (map-indexed #(render-code a %2 %1) cs)])
 
 (defn- render-error [error]
@@ -77,6 +78,8 @@
                             [box
                              :child [:div (-> code t/parse pp/pretty-print)]]]]]]))
 
+(defonce show-code-box (atom false))
+
 (defn root-component []
   (let [modal (s/modal!)
         error (s/error!)
@@ -86,11 +89,13 @@
      :height "inherit"
      :children [[main-component]
 
-                ;; [gap :size "1"]
+                [gap :size "1"]
 
-                ;; [box
-                ;;  :width "inherit"
-                ;;  :child (edit-elem code active)]
+                (if @show-code-box
+
+                  [box
+                   :width "inherit"
+                   :child (edit-elem code active)])
 
                 (if-not (nil? error)
                   (render-error error)

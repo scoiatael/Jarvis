@@ -32,8 +32,7 @@
 
 (defn add-empty-node []
     (update-fields
-     [:nodes] #(conj % '())
-     [:active] inc))
+     [:nodes] #(conj % '())))
 
 (defn set-error [e]
   (update-fields
