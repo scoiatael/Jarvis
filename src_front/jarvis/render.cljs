@@ -1,7 +1,9 @@
 (ns jarvis.render
   (:require
    [re-com.core :as rc]
-   [jarvis.pretty-print :as pp]))
+   [jarvis.pretty-print :as pp]
+   [jarvis.colors.solarized :as sol]
+   [jarvis.font :as font]))
 
 (defn- code-box [o code color]
   (let [on-click (:on-click o)
@@ -9,21 +11,24 @@
     [rc/box
      :attr {:on-click on-click
             :on-mouse-over on-hover}
-     :style {:border "solid 5px"
-             :border-color color
+     :style {:border (str "solid 2px " color)
+             :border-radius "2px"
              :height "100%"
+             :padding "5px"
+             :text-align "center"
+             :font-family font/code
              :margin "1em"}
      :child  code]))
 
 (def ^:private type->color {
-                            :keyword "blue"
-                            :symbol "green"
-                            :number "yellow"
-                            :string "orange"
-                            :list "magenta"
-                            :map "pink"
-                            :vector "grey"
-                            :misc "red"
+                            :keyword sol/yellow
+                            :symbol sol/orange
+                            :number sol/green
+                            :string sol/magenta
+                            :list sol/violet
+                            :map sol/blue
+                            :vector sol/cyan
+                            :misc sol/red
                             })
 
 ;; Primitives
