@@ -2,7 +2,10 @@
 
 Ever wondered how can you code easily on touchscreen?
 
-Search no more - __Jarvis__ is touch-focused Haskell IDE.
+Search no more - __Jarvis__ is touch-focused Clojure IDE.
 
-## Concept
-![presentation](https://cloud.githubusercontent.com/assets/2892794/8335149/2764447e-1a9c-11e5-9bf5-af850a8fc988.gif)
+## Aims
+
+* Present Clojure code in readable manner.
+* Allow programmer to code using touch interface (use gestures, taps, seldom use of keyboard).
+* Enhance programmer capabilities with suggestions and quick access to documentation.
