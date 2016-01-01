@@ -22,12 +22,14 @@
                             :on-click #(s/set-modal [item index])}
                            (-> item t/parse))]
       [rc/border
+       ;; :style {:max-width "100%"}
        :border (str "1px dashed " (if (= active index) sol/red "transparent"))
        :child rendered]))
 
 (defn- render-codes [cs a]
   [v-box
    :align :start
+   :style {:max-width "100%"}
    :children (map-indexed #(render-code a %2 %1) cs)])
 
 (defn- render-error [error]
@@ -43,6 +45,8 @@
    :backdrop-color "#666666"
    :backdrop-opacity 0.4
    :backdrop-on-click s/reset-modal])
+
+(defonce show-right-side (atom false))
 
 (defn- main-component []
   (let [codes (s/nodes!)
@@ -67,16 +71,20 @@
                               :md-icon-name "zmdi-minus"
                               :on-click s/pop-code
                               :disabled? (> 2 (count codes))]]]
-                [v-box
-                 :size "1"
-                 :style {:font-family font/code}
-                 :children [[box
-                             :child [:div (pp/pretty-print @s/state)]]
 
-                            [gap :size "2em"]
+                [gap
+                 :size "1em"]
 
-                            [box
-                             :child [:div (-> code t/parse pp/pretty-print)]]]]]]))
+                (if @show-right-side [v-box
+                                      :size "1"
+                                      :style {:font-family font/code}
+                                      :children [[box
+                                                  :child [:div (pp/pretty-print @s/state)]]
+
+                                                 [gap :size "2em"]
+
+                                                 [box
+                                                  :child [:div (-> code t/parse pp/pretty-print)]]]])]]))
 
 (defonce show-code-box (atom false))
 
