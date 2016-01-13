@@ -18,11 +18,8 @@
             [lein-shell "0.4.1"]
             [lein-figwheel "0.4.0" :exclusions [org.clojure/core.cache]]]
   :source-paths ["src_tools"]
-  :aliases {"install-grunt" ["shell" "npm" "install" "-g" "grunt-cli"]
-            "npm-deps" ["shell" "npm" "install"]
-            "download-electron" ["shell" "grunt" "download-electron"]
-            "init-descjop" ["do" "install-grunt," "npm-deps," "download-electron"]
-            "startapp" ["trampoline" "shell" "./electron/electron" "app"]}
+  :aliases {"npm-deps" ["trampoline" "shell" "npm" "install"]
+            "startapp" ["trampoline" "shell" "npm" "start"]}
   :hooks [leiningen.cljsbuild]
   :cljsbuild {:builds
               {:main {:id "jarvis"

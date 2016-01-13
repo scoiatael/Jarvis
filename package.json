@@ -8,6 +8,10 @@
     "closurecompiler-externs": "^1.0.4"
   },
   "dependencies": {
+    "electron-prebuilt": "^0.36.3",
     "nrepl-client": "^0.2.3"
+  },
+  "scripts": {
+    "start": "electron app/js/main.js"
   }
 }
