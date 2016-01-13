@@ -1,6 +1,7 @@
 (ns jarvis.core
   (:require [figwheel.client :as fw :include-macros true]
             [jarvis.app :as app]
+            [jarvis.ipc :as ipc]
             [reagent.core :as reagent]
             [goog.style]))
 
@@ -16,6 +17,7 @@
 
 (defn init! []
   (goog.style/installStyles (app/styles))
+  (ipc/setup!)
   (mount-root))
 
 (init!)

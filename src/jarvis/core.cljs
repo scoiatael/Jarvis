@@ -1,6 +1,7 @@
 (ns jarvis.core
   (:require [cljs.nodejs :as nodejs]
-            [jarvis.nrepl :as nrepl]))
+            [jarvis.nrepl :as nrepl]
+            [jarvis.ipc :as ipc]))
 
 (def path (nodejs/require "path"))
 
@@ -24,6 +25,15 @@
      (fn [] (if (not= (.-platform nodejs/process) "darwin")
               (.quit app))))
 
+
+  (.on app "will-quit"
+       (fn [ev] (if (nrepl/server-present?)
+                  (do
+                    (.preventDefault ev)
+                    (nrepl/kill! #(.quit app))))))
+
+  (ipc/setup!)
+
   ; ready listener
    (.on app "ready"
      (fn []
@@ -41,14 +51,3 @@
 (set! *main-cli-fn* -main)
 
 (nrepl/launch! #(.log js/console "Connected to nREPL"))
-
-(.on app "will-quit"
-     (fn [ev] (if (nrepl/server-present?)
-               (do
-                 (.preventDefault ev)
-                 (nrepl/kill! #(.quit app))))))
-
-
-(.on nodejs/process "SIGUSR1" (fn []
-                                (.log js/console "SIGUSR1 detected")
-                                (nrepl/eval! "(+ 1 10)")))
