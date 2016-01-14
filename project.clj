@@ -13,21 +13,20 @@
                  [org.clojure/tools.reader "1.0.0-alpha1"]
                  [garden "1.3.0-SNAPSHOT"]
                  [ring/ring-core "1.4.0"]]
-  :plugins [[lein-cljsbuild "1.0.5"]
+  :plugins [[lein-cljsbuild "1.1.2"]
             [lein-externs "0.1.3"]
             [lein-shell "0.4.1"]
             [lein-figwheel "0.4.0" :exclusions [org.clojure/core.cache]]]
-  :source-paths ["src_tools"]
+  :source-paths ["tools/server"]
   :aliases {"npm-deps" ["trampoline" "shell" "npm" "install"]
             "startapp" ["trampoline" "shell" "npm" "start"]}
-  :hooks [leiningen.cljsbuild]
   :cljsbuild {:builds
-              {:main {:id "jarvis"
-                      :source-paths ["src"]
+              {:main {:id "renderer"
+                      :source-paths ["tools/app"]
                       :incremental true
                       :jar true
                       :assert true
-                      :compiler {:output-to "app/js/cljsbuild-main.js"
+                      :compiler {:output-to "app/js/renderer.js"
                                  :externs ["app/js/externs.js"
                                            "node_modules/closurecompiler-externs/path.js"
                                            "node_modules/closurecompiler-externs/process.js"]
@@ -50,8 +49,8 @@
                                  :pretty-print true
                                  :output-wrapper true
                                  }}
-               :frontend {:id "jarvis-reagent"
-                          :source-paths ["src_front"]
+               :frontend {:id "main"
+                          :source-paths ["src"]
                           :incremental true
                           :jar true
                           :assert true
@@ -66,15 +65,14 @@
                                      ;;:output-dir "app/js/out"
 
                                      ;; simple compile (dev)
-                                     ;;:optimizations :simple
-
-                                     ;; advanced compile (prod)
                                      :optimizations :none
 
-                                     ;;:source-map "app/js/test.js.map"
+                                     ;; advanced compile (prod)
+                                     ;; :optimizations :none
+
                                      :pretty-print true
                                      :output-wrapper true
                                      }}}}
-  :figwheel {:http-server-root "public"
+  :figwheel {:http-server-root "app"
              :ring-handler figwheel-middleware/app
              :server-port 3449})

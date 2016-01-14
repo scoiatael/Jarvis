@@ -1,5 +1,5 @@
 // optimization : simple or optimization: advanced
-require('./cljsbuild-main');
+require('./renderer');
 
 // optimization : none
 // uncomment below
