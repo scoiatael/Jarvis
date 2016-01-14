@@ -1,1 +1,21 @@
-var TopLevel = {}
+var TopLevel = {
+"access" : function () {},
+"app" : function () {},
+"apply" : function () {},
+"cmd" : function () {},
+"connect" : function () {},
+"console" : function () {},
+"data" : function () {},
+"document" : function () {},
+"Error" : function () {},
+"error" : function () {},
+"eval" : function () {},
+"getElementById" : function () {},
+"id" : function () {},
+"JarvisState" : function () {},
+"log" : function () {},
+"message" : function () {},
+"once" : function () {},
+"readFile" : function () {},
+"writeFile" : function () {}
+}

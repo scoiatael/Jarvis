@@ -15,14 +15,14 @@
                  [ring/ring-core "1.4.0"]]
   :plugins [[lein-cljsbuild "1.1.2"]
             [lein-externs "0.1.3"]
-            [lein-shell "0.4.1"]
-            [lein-figwheel "0.4.0" :exclusions [org.clojure/core.cache]]]
+            [lein-figwheel "0.5.0"]]
   :source-paths ["tools/server"]
   :aliases {"npm-deps" ["trampoline" "shell" "npm" "install"]
             "startapp" ["trampoline" "shell" "npm" "start"]}
+  :clean-targets [:target-path "out"]
   :cljsbuild {:builds
-              {:main {:id "renderer"
-                      :source-paths ["tools/app"]
+              {:renderer {:id "renderer"
+                      :source-paths ["tools"]
                       :incremental true
                       :jar true
                       :assert true
@@ -30,6 +30,7 @@
                                  :externs ["app/js/externs.js"
                                            "node_modules/closurecompiler-externs/path.js"
                                            "node_modules/closurecompiler-externs/process.js"]
+                                 :main "app.core"
                                  :warnings true
                                  :elide-asserts true
                                  :target :nodejs
@@ -49,7 +50,7 @@
                                  :pretty-print true
                                  :output-wrapper true
                                  }}
-               :frontend {:id "main"
+               :main {:id "main"
                           :source-paths ["src"]
                           :incremental true
                           :jar true

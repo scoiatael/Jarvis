@@ -1,5 +1,6 @@
-(ns app.renderer
+(ns app.core
   (:require [cljs.nodejs :as nodejs]
+            [app.util :as util]
             [app.nrepl :as nrepl]))
 
 (def path (nodejs/require "path"))
@@ -29,10 +30,12 @@
               (.quit app))))
 
   (.on app "will-quit"
-       (fn [ev] (if (nrepl/server-present?)
-                  (do
-                    (.preventDefault ev)
-                    (nrepl/kill! #(.quit app))))))
+       (fn [ev] (do
+                 (util/log! "Quitting, killing repl? ->", (nrepl/server-present?))
+                 (if (nrepl/server-present?)
+                   (do
+                     (.preventDefault ev)
+                     (nrepl/kill! #(.quit app)))))))
 
   ; ready listener
    (.on app "ready"

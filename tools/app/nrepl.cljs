@@ -37,6 +37,7 @@
     (if (server-present?)
       (.stop Server server (fn [err]
                              (reset! *server* nil)
+                             (util/log! "nREPL killed")
                              (if-not (nil? err)
                                (util/error! "nREPL kill error:" err)
                                (cb))))
