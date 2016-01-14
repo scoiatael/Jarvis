@@ -19,7 +19,7 @@
   :source-paths ["tools/server"]
   :aliases {"npm-deps" ["trampoline" "shell" "npm" "install"]
             "startapp" ["trampoline" "shell" "npm" "start"]}
-  :clean-targets [:target-path "out"]
+  :clean-targets [:target-path "app/js/out" "app/js/renderer.js" "app/js/front.js"]
   :cljsbuild {:builds
               {:renderer {:id "renderer"
                       :source-paths ["tools"]
