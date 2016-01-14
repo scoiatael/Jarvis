@@ -1,5 +1,6 @@
 (ns jarvis.nrepl
-  (:require [cljs.nodejs :as nodejs]))
+  (:require [cljs.nodejs :as nodejs]
+            [jarvis.util :as util]))
 
 (def ^:private Client (nodejs/require "nrepl-client"))
 
@@ -14,7 +15,9 @@
 
 (def ^:private *server* (atom nil))
 
-(def *server-options* (atom {:verbose true}))
+(def *server-options* (atom {:verbose true
+                             ;; TODO Find better tmp path
+                             :projectPath "/tmp/l"}))
 
 (defn server-present? [] (not (= @*server* nil)))
 
@@ -25,30 +28,36 @@
 (defn- launch-server [cb] (if-not (server-present?)
                          (.start Server (clj->js @*server-options*)
                                  (fn [err serv]
-                                   (if-not (= nil err) (.error js/console "nREPL start error: " err)
+                                   (if-not (nil? err) (util/error! "nREPL start error: " err)
                                            (cb serv))
                                    (reset! *server* serv)))
                          ;; TODO: handle timed out or dead server
-                         (.error js/console "nREPL already started!")))
+                         (util/error! "nREPL already started!")))
 
-(defn- handler [err res]
-  (if-not (= nil err) (.error js/console "nREPL eval error: " err))
-  (.log js/console "nREPL response: " res))
+(defn- handler [ev err res]
+  (if-not (nil? err) (util/error! "nREPL error: " err))
+  (util/log! "nREPL response: " res)
+  (.send (.-sender ev) "done" (clj->js {})))
 
 (defn launch! [cb] (launch-server #(connect-to-server % cb)))
-
-(defn eval! [expr] (let [connection @*connection*]
-                    (if (= nil connection)
-                      (.error js/console "No connection to nREPL!")
-                      (.eval connection expr handler))))
 
 (defn kill! [cb]
   (let [server @*server*]
     (if (server-present?)
       (.stop Server server (fn [err]
                              (reset! *server* nil)
-                             (if-not (= nil err)
-                               (.error js/console "nREPL kill error:" err)
+                             (if-not (nil? err)
+                               (util/error! "nREPL kill error:" err)
                                (cb))))
       ;; TODO: handle timed out or dead server
-      (.error js/console "nREPL not launched"))))
+      (util/error! "nREPL not launched"))))
+
+(defn eval! [expr ev] (let [connection @*connection*]
+                        (util/log! "Eval: " expr)
+                        (if (nil? connection)
+                          (util/error! "No connection to nREPL!")
+                          (.eval connection expr (partial handler ev)))))
+
+(defn open! [file ev]
+  (util/log! "Opening: " file)
+  (eval! `(~'load-file ~file) ev))

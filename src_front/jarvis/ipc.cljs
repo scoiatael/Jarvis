@@ -1,12 +1,17 @@
-(ns jarvis.ipc)
+(ns jarvis.ipc
+  (:require [jarvis.util :as util]))
 
 (def ^:private ipcRenderer (.-ipcRenderer (js/require "electron")))
 
+(defn- send [ev msg] (.send ipcRenderer ev (clj->js msg)))
+
 (defn- eval-message [form]
   {"cmd" "eval"
-   "id" 1
    "data" form})
 
-(defn eval [form] (.send ipcRenderer "nrepl" (clj->js (eval-message form))))
+(defn eval [form] (send "nrepl" (eval-message form)))
 
-(defn setup! [] "nil")
+(defn open-file [fn] (send "open-file" fn))
+
+(defn setup! []
+  (.on ipcRenderer "done" (fn [data] (util/log! "IPC done!"))))
