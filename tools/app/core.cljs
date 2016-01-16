@@ -16,6 +16,7 @@
 (def *win* (atom nil))
 
 (defn -main []
+  (util/log! "Starting up..")
   ;; (.start crash-reporter)
 
   (nrepl/launch! (fn [srv]))

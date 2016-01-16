@@ -8,19 +8,26 @@
 
 (def ^:private port 31339)
 
+(def ^:private connection-options {:port port :verbose true})
+
 (defn- connect-to-server [cb]
-  (reset! *connection* (.connect Client (clj->js {:port port})))
+  (reset! *connection* (.connect Client (clj->js connection-options)))
   (.once @*connection* "connect" cb))
 
 (defn- handler [err res]
   (if-not (nil? err) (util/error! "nREPL error: " err))
   (util/log! "nREPL response: " res))
 
-(defn eval! [expr] (let [connection @*connection*]
-                        (util/log! "Eval: " expr)
-                        (if (nil? connection)
-                          (util/error! "No connection to nREPL!")
-                          (.eval connection expr handler))))
+(defn- with-connection! [cb]
+  (let [connection @*connection*]
+    (if (nil? connection)
+      (util/error! "No connection to nREPL!")
+      (cb connection))))
+
+(defn eval! [expr]
+  (with-connection! (fn [connection]
+                      (util/log! "Eval: " expr)
+                      (.eval connection expr handler))))
 
 (defn open! [file]
   (util/log! "Opening: " file)
