@@ -2,6 +2,8 @@
   (:require [figwheel.client :as fw :include-macros true]
             [jarvis.app :as app]
             [jarvis.nrepl :as nrepl]
+            [jarvis.ipc :as ipc]
+            [jarvis.util :as util]
             [reagent.core :as reagent]
             [goog.style]
             [cljs.nodejs :as nodejs]))
@@ -22,6 +24,13 @@
 
 (defn init! []
   (goog.style/installStyles (app/styles))
+
+  (.on ipc/renderer "server-started"
+       (fn [srv] (nrepl/connect-to-server
+                 (fn [] (util/log! "Connected to nREPL")))))
+
+  (util/log! "Requesting nREPL start..")
+  (ipc/start-server! {})
 
   (mount-root))
 

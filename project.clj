@@ -16,6 +16,9 @@
   :plugins [[lein-cljsbuild "1.1.2"]
             [lein-externs "0.1.3"]
             [lein-figwheel "0.5.0"]]
+  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                                  [org.clojure/tools.nrepl "0.2.10"]]
+                   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}}
   :source-paths ["tools/server"]
   :aliases {"npm-deps" ["trampoline" "shell" "npm" "install"]
             "startapp" ["trampoline" "shell" "npm" "start"]}
@@ -76,4 +79,12 @@
                                      }}}}
   :figwheel {:http-server-root "app"
              :ring-handler figwheel-middleware/app
-             :server-port 3449})
+             :server-port 3449
+
+             ;; Start an nREPL server into the running figwheel process
+             :nrepl-port 7888
+
+             ;; Load CIDER, refactor-nrepl and piggieback middleware
+              :nrepl-middleware ["cider.nrepl/cider-middleware"
+                                 "refactor-nrepl.middleware/wrap-refactor"
+                                 "cemerick.piggieback/wrap-cljs-repl"]})

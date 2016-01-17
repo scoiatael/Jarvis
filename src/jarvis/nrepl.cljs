@@ -25,9 +25,12 @@
       (cb connection))))
 
 (defn eval! [expr]
-  (with-connection! (fn [connection]
-                      (util/log! "Eval: " expr)
-                      (.eval connection expr handler))))
+  (let [str-expr (if (string? expr)
+                   expr
+                   (str expr))]
+    (with-connection! (fn [connection]
+                        (util/log! "Eval: " str-expr)
+                        (.eval connection str-expr handler)))))
 
 (defn open! [file]
   (util/log! "Opening: " file)

@@ -4,16 +4,11 @@
             [jarvis.util :as util]
             [jarvis.nrepl :as nrepl]))
 
-(defn- handle-nrepl-message [ev arg]
-  (util/log! "Got nrepl message" arg)
-  (let [cmd (.-cmd arg)
-        data (.-data arg)
-        id (.-id arg)]
-    (case cmd
-      "eval" (nrepl/eval! data)
-      (util/error! "Unknown message" arg))))
+(def renderer (.-ipcRenderer (nodejs/require "electron")))
 
 (defn handle-open-file [ev arg]
   (util/log! "Got open file" arg)
-  (let [fn "/tmp/l/test.clj"]
-    (file/open fn #(nrepl/open! fn))))
+  (let [fname "/tmp/l/test.clj"]
+    (file/open fname #(nrepl/open! fname))))
+
+(defn start-server! [params] (.send renderer "start-server" (clj->js params)))

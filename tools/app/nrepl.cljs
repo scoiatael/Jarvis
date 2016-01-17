@@ -18,19 +18,29 @@
 
 (def ^:private *server* (atom nil))
 
+(defn- server-js->clj [srv]
+  ;; srv == {proc: PROCESS, hostname: STRING, port: NUMBER, started: BOOL, exited: BOOL, timedout: BOOL}
+  {:hostname (.-hostname srv)
+   :port (.-port srv)
+   :started (.-started srv)
+   :exited (.-exited srv)
+   :timedout (.-timedout srv)
+   })
+
 (defn server-present? [] (not (nil? @*server*)))
 
-(defn- launch-server [cb] (if-not (server-present?)
-                            (.start Server (clj->js @*server-options*)
-                                    (fn [err serv]
-                                      (if-not (nil? err) (util/error! "nREPL start error: " err)
-                                              (cb serv))
-                                      (reset! *server* serv)))
-                            ;; TODO: handle timed out or dead server
-                            (util/error! "nREPL already started!")))
+(defn- launch-server [opts cb] (if-not (server-present?)
+                                 (.start Server (clj->js @*server-options*)
+                                         (fn [err serv]
+                                           (if-not (nil? err) (util/error! "nREPL start error: " err)
+                                                   (do
+                                                     (reset! *server* (server-js->clj serv))
+                                                     (cb @*server*)))))
+                                 ;; TODO: handle timed out or dead server
+                                 (cb @*server*)))
 
 
-(defn launch! [cb] (launch-server cb))
+(defn launch! [opts cb] (launch-server opts cb))
 
 (defn kill! [cb]
   (let [server @*server*]

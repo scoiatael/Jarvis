@@ -1,6 +1,7 @@
 (ns app.core
   (:require [cljs.nodejs :as nodejs]
             [app.util :as util]
+            [app.ipc :as ipc]
             [app.nrepl :as nrepl]))
 
 (def path (nodejs/require "path"))
@@ -19,7 +20,10 @@
   (util/log! "Starting up..")
   ;; (.start crash-reporter)
 
-  (nrepl/launch! (fn [srv]))
+  (.on ipc/main "start-server"
+       (fn [ev arg]
+         (nrepl/launch! {}
+                        (partial ipc/reply! ev "server-started"))))
 
   ;; error listener
   (.on nodejs/process "error"
@@ -41,7 +45,7 @@
   ; ready listener
    (.on app "ready"
      (fn []
-       (reset! *win* (BrowserWindow. (clj->js {:width 800 :height 600})))
+       (reset! *win* (BrowserWindow. (clj->js {:fullscreen true :title "Jarvis"})))
 
        ;; when no optimize comment out
        (.loadUrl @*win* (str "file://" (.resolve path (js* "__dirname") "../index.html")))
