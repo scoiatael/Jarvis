@@ -27,6 +27,9 @@
    :timedout (.-timedout srv)
    })
 
+(defn server! []
+  (server-js->clj @*server*))
+
 (defn server-present? [] (not (nil? @*server*)))
 
 (defn- launch-server [opts cb] (if-not (server-present?)
@@ -34,10 +37,10 @@
                                          (fn [err serv]
                                            (if-not (nil? err) (util/error! "nREPL start error: " err)
                                                    (do
-                                                     (reset! *server* (server-js->clj serv))
-                                                     (cb @*server*)))))
+                                                     (reset! *server* serv)
+                                                     (cb (server!))))))
                                  ;; TODO: handle timed out or dead server
-                                 (cb @*server*)))
+                                 (cb (server!))))
 
 
 (defn launch! [opts cb] (launch-server opts cb))

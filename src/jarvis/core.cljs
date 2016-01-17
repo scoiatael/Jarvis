@@ -4,6 +4,7 @@
             [jarvis.nrepl :as nrepl]
             [jarvis.ipc :as ipc]
             [jarvis.util :as util]
+            [jarvis.bus :as bus]
             [reagent.core :as reagent]
             [goog.style]
             [cljs.nodejs :as nodejs]))

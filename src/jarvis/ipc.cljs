@@ -4,7 +4,7 @@
             [jarvis.util :as util]
             [jarvis.nrepl :as nrepl]))
 
-(def renderer (.-ipcRenderer (nodejs/require "electron")))
+(defonce renderer (.-ipcRenderer (nodejs/require "electron")))
 
 (defn handle-open-file [ev arg]
   (util/log! "Got open file" arg)
