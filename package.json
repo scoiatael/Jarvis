@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "electron-prebuilt": "^0.36.3",
-    "nrepl-client": "rksm/node-nrepl-client"
+    "nrepl-client": "rksm/node-nrepl-client",
+    "tmp": "0.0.28"
   },
   "scripts": {
     "start": "electron app/js/main.js"

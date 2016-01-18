@@ -14,7 +14,7 @@
                              ;; TODO Use non-constant port number
                              :port port
                              ;; TODO Find better tmp path
-                             :projectPath "/tmp/l"}))
+                             :projectPath "examples"}))
 
 (def ^:private *server* (atom nil))
 
@@ -27,13 +27,18 @@
    :timedout (.-timedout srv)
    })
 
+(defn- server-options [opts]
+  (-> @*server-options*
+      (merge opts)
+      (clj->js)))
+
 (defn server! []
   (server-js->clj @*server*))
 
 (defn server-present? [] (not (nil? @*server*)))
 
 (defn- launch-server [opts cb] (if-not (server-present?)
-                                 (.start Server (clj->js @*server-options*)
+                                 (.start Server (server-options opts)
                                          (fn [err serv]
                                            (if-not (nil? err) (util/error! "nREPL start error: " err)
                                                    (do

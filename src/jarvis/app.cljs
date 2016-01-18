@@ -2,6 +2,7 @@
   (:require [re-com.core :refer [v-box box h-box input-textarea gap] :as rc]
             [reagent.core :refer [atom]]
             [garden.core :refer [css]]
+            [jarvis.lifecycle :as lifecycle]
             [jarvis.state :as s]
             [jarvis.types :as t]
             [jarvis.font :as font]
@@ -50,8 +51,7 @@
 
 (defn- main-component []
   (let [codes (s/nodes!)
-        active (s/active!)
-        code (nth codes active)]
+        active (s/active!)]
     [h-box
      :style { :height "100%" }
      :children [[box :size "200px" :child "Nav"]
@@ -75,16 +75,19 @@
                 [gap
                  :size "1em"]
 
-                (if @show-right-side [v-box
-                                      :size "1"
-                                      :style {:font-family font/code}
-                                      :children [[box
-                                                  :child [:div (pp/pretty-print @s/state)]]
 
-                                                 [gap :size "2em"]
+                (let [code (s/code!)]
+                  (if (and @show-right-side (not= nil? code))
+                    [v-box
+                     :size "1"
+                     :style {:font-family font/code}
+                     :children [[box
+                                 :child [:div (pp/pretty-print @s/state)]]
 
-                                                 [box
-                                                  :child [:div (-> code t/parse pp/pretty-print)]]]])]]))
+                                [gap :size "2em"]
+
+                                [box
+                                 :child [:div (-> code t/parse pp/pretty-print)]]]]))]]))
 
 (defonce show-code-box (atom false))
 
@@ -99,7 +102,7 @@
 
                 [gap :size "1"]
 
-                (if @show-code-box
+                (if (and @show-code-box (not= nil code))
 
                   [box
                    :width "inherit"

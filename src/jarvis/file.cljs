@@ -8,10 +8,10 @@
 
 (defn read [file cb]
   (util/log! "ReadFile: " file)
-  (.readFile fs file (fn [err data]
-                     (if (nil? err)
-                       (cb data)
-                       (util/error! err)))))
+  (.readFile fs file "utf8" (fn [err data]
+                              (if (nil? err)
+                                (cb data)
+                                (util/error! err)))))
 
 (defn write [file contents cb]
   (util/log! "WriteFile: " file)
