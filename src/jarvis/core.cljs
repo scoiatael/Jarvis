@@ -1,10 +1,11 @@
 (ns jarvis.core
   (:require [figwheel.client :as fw :include-macros true]
-            [jarvis.app :as app]
-            [jarvis.nrepl :as nrepl]
-            [jarvis.ipc :as ipc]
-            [jarvis.util :as util]
-            [jarvis.bus :as bus]
+            [jarvis.views.app :as app]
+            [jarvis.state.core :as state]
+            [jarvis.util.nrepl :as nrepl]
+            [jarvis.util.ipc :as ipc]
+            [jarvis.util.logger :as util]
+            [jarvis.util.bus :as bus]
             [reagent.core :as reagent]
             [goog.style]
             [cljs.nodejs :as nodejs]))
@@ -20,7 +21,7 @@
 (enable-console-print!)
 
 (defn mount-root []
-  (reagent/render [jarvis.app.main]
+  (reagent/render [app/main state/fetch]
                   (.getElementById js/document "app")))
 
 (defn init! []

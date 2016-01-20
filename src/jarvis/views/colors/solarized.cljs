@@ -1,4 +1,4 @@
-(ns jarvis.colors.solarized)
+(ns jarvis.views.colors.solarized)
 
 (def base03 "#002b36")
 (def base02 "#073642")

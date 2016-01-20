@@ -1,10 +1,9 @@
-(ns jarvis.render
-  (:require
-   [re-com.core :as rc]
-   [re-com.box :refer [flex-flow-style]]
-   [jarvis.colors.solarized :as sol]
-   [jarvis.font :as font]
-   [jarvis.util :as util]))
+(ns jarvis.views.render
+  (:require [re-com.core :as rc]
+            [re-com.box :refer [flex-flow-style]]
+            [jarvis.views.colors.solarized :as sol]
+            [jarvis.views.font :as font]
+            [jarvis.util.logger :as util]))
 
 (defn- code-box [o code color]
   (let [on-click (:on-click o)

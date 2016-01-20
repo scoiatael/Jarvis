@@ -1,8 +1,7 @@
 (ns jarvis.syntax.parser
-  (:require
-   [cljs.tools.reader.edn :as edn]
-   [cljs.tools.reader.reader-types :as types]
-   [jarvis.util :as util]))
+  (:require [cljs.tools.reader.edn :as edn]
+            [cljs.tools.reader.reader-types :as types]
+            [jarvis.util.logger :as util]))
 
 (defn- reader [str]
   (types/source-logging-push-back-reader str))

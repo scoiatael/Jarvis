@@ -1,10 +1,10 @@
 (ns jarvis.lifecycle
-  (:require [jarvis.nrepl :as nrepl]
-            [jarvis.file :as file]
-            [jarvis.state :as state]
+  (:require [jarvis.util.nrepl :as nrepl]
+            [jarvis.util.file :as file]
+            [jarvis.state.core :as state]
             [jarvis.syntax.parser :as parser]
             [jarvis.syntax.types :as t]
-            [jarvis.util :as util]))
+            [jarvis.util.logger :as util]))
 
 (defn push-code
   ([code]
@@ -16,13 +16,25 @@
      (if (nil? error)
        (do
          (nrepl/eval! form)
-         (state/push-code (t/parse form) index))
-       (state/set-error error)))))
+         (state/push-code! (t/parse form) index))
+       (state/set-error! error)))))
 
 (defn push-file [contents]
   (state/reset-state!)
   (let [parsed (parser/file contents)]
-    (map state/push-code parsed)))
+    (map state/push-code! parsed)))
+
+(defn add-new-node []
+  (state/push-code! (t/parse '()))
+  (let [last (- (state/nodes-length) 1)]
+    (state/set-modal! [(state/code last) last])))
+
+(defn pop-code [] (state/pop-code!))
+
+(defn set-active [active] (state/set-active! active))
+(defn set-modal [modal] (state/set-modal! modal))
+(defn reset-error [] (state/reset-error!))
+(defn reset-modal [] (state/reset-modal!))
 
 (def ^:private tmp-file "examples/file1.clj")
 
@@ -38,10 +50,3 @@
   (util/log! "Got write file" fname contents)
   (let [fname tmp-file]
     (file/write fname contents #(nrepl/open! fname))))
-
-(defn add-new-node []
-  (state/push-code (t/parse '()))
-  (let [last (- (state/nodes-length!) 1)]
-    (state/set-modal [(state/code! last) last])))
-
-(defn pop-code [] (state/pop-code))

@@ -1,4 +1,4 @@
-(ns jarvis.util)
+(ns jarvis.util.logger)
 
 (defn error! [& args] (.apply (.-error js/console) js/console (clj->js args)))
 

@@ -1,6 +1,6 @@
-(ns jarvis.file
+(ns jarvis.util.file
   (:require [cljs.nodejs :as nodejs]
-            [jarvis.util :as util]))
+            [jarvis.util.logger :as util]))
 
 (def ^:private fs (nodejs/require "fs"))
 
