@@ -63,7 +63,7 @@
 (defn- render-seq [o k c]
   (code-box o [rc/h-box
                :size "0 1 auto"
-               :algin :center
+               :align :center
                :style (flex-flow-style "row wrap")
                :gap sep
                :children (->> k (map (partial render o)))] c))
@@ -75,6 +75,7 @@
 (defn- render-tuple [o k] (let [f (first k)
                               s (second k)]
                             [rc/v-box
+                             :size "0 1 auto"
                              :children [(render o f)
                                         [rc/md-icon-button
                                          :md-icon-name "zmdi-long-arrow-down"
@@ -82,6 +83,7 @@
                                         (render o s)]]))
 
 (defn- render-map [o k] (code-box o [rc/h-box
+                                     :size "0 1 auto"
                                      :style (flex-flow-style "row wrap")
                                      :gap sep
                                      :children (->> k (map (partial render-tuple o)))] (type->color :map)))
