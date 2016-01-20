@@ -1,8 +1,7 @@
 (ns jarvis.state
   (:require
    [reagent.core :refer [atom]]
-   [jarvis.util :as util]
-   [jarvis.syntax.parser :as parser]))
+   [jarvis.util :as util]))
 
 (defrecord JarvisState [nodes active error modal])
 
@@ -32,13 +31,15 @@
 (defn modal! []
   (:modal @state))
 
+(defn valid-index? [index]
+  (and (number? index) (< index (nodes-length!)) (< -1 index)))
+
 (defn code!
   ([]
    (code! (active!)))
   ([index]
-   (let [nodes (nodes!)
-         nodes-length (nodes-length!)]
-     (if (< index nodes-length)
+   (let [nodes (nodes!)]
+     (if (valid-index? index)
        (nth (nodes!) index)
        nil))))
 
@@ -50,10 +51,6 @@
 (defn- update-fields [field fun & args]
   (swap! state #(reduce update-field % (conj (partition 2 args) [field fun]))))
 
-(defn add-empty-node []
-    (update-fields
-     [:nodes] #(conj % '())))
-
 (defn set-error [e]
   (update-fields
    [:error] (constantly e)))
@@ -63,6 +60,7 @@
    [:modal] (constantly e)))
 
 (defn set-active [a]
+  (when (valid-index? a))
   (update-fields
    [:active] (constantly a)))
 
@@ -73,22 +71,21 @@
 
 (defn reset-modal [] (set-modal nil))
 
-(defn- push-parsed-code
-  ([code]
-   (add-empty-node)
-   (push-parsed-code code (- (nodes-length!) 1)))
-  ([code index]
-   (update-fields
-    [:nodes] #(assoc % index code))))
+(defn push-code! [code]
+  (update-fields
+   [:nodes] #(conj % code)))
+
+(defn- insert-code! [code index]
+  (update-fields
+   [:nodes] #(assoc % index code)))
 
 (defn push-code
+  ([code]
+   (push-code code nil))
   ([code index]
-   (let [parsed (parser/form code)
-         error (:error parsed)
-         form (:form parsed)]
-     (if (nil? error)
-       (push-parsed-code form index)
-       (set-error error)))))
+   (if-not (valid-index? index)
+     (push-code! code)
+     (insert-code! code index))))
 
 (defn nodes-empty? []
   (< (nodes-length!) 1))
@@ -100,8 +97,3 @@
        [:nodes] pop
        [:active] #(if (< % last) % last))
       (set-error (js/Error. "Can't remove from empty list!")))))
-
-(defn push-file [contents]
-  (reset-state!)
-  (let [parsed (parser/file contents)]
-    (map push-parsed-code parsed)))

@@ -1,7 +1,9 @@
-(ns jarvis.types)
+(ns jarvis.syntax.types
+  (:require [jarvis.syntax.walk :as walk]))
 
 (defn simple-type [value] (let [vty (type value)]
                             (cond
+                              (nil? value) :nil
                               (number? value) :number
                               (string? value) :string
                               (= cljs.core/PersistentVector vty) :vector
@@ -15,18 +17,4 @@
 
 (defn annotate-type [code] {:value code :type (simple-type code)})
 
-(defn walk
-  [inner outer form]
-  (cond
-    (list? form)   (outer (apply list (map inner form)))
-    (seq? form)    (outer (doall (map inner form)))
-    (record? form) (outer (reduce (fn [r x] (conj r (inner x))) form form))
-    (map? form)    (outer (into (empty form) (map #(into [] (map inner %)) form)))
-    (coll? form)   (outer (into (empty form) (map inner form)))
-    :else          (outer form)))
-
-(defn postwalk
-  [f form]
-  (walk (partial postwalk f) f form))
-
-(defn parse [code] (postwalk annotate-type code))
+(defn parse [code] (walk/postwalk annotate-type code))

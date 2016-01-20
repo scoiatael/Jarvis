@@ -2,9 +2,9 @@
   (:require
    [re-com.core :as rc]
    [re-com.box :refer [flex-flow-style]]
-   [jarvis.pretty-print :as pp]
    [jarvis.colors.solarized :as sol]
-   [jarvis.font :as font]))
+   [jarvis.font :as font]
+   [jarvis.util :as util]))
 
 (defn- code-box [o code color]
   (let [on-click (:on-click o)
@@ -46,14 +46,16 @@
                             })
 
 ;; Primitives
-(defn- render-keyword [o k] (code-text o (pp/pretty-print k) (type->color :keyword)))
+(defn- render-nil [o _] (code-text o "nil" (type->color :keyword)))
+(defn- render-keyword [o k] (code-text o k (type->color :keyword)))
 (defn- prettify-symbol [s]
-  (case (clojure.string/trim s)
-    "quote" "'"
-    s))
-(defn- render-symbol [o k] (code-text o (prettify-symbol (pp/pretty-print k)) (type->color :symbol)))
+  (let [stringified (str s)]
+    (case (-> stringified clojure.string/trim)
+      "quote" "'"
+      stringified)))
+(defn- render-symbol [o k] (code-text o (prettify-symbol k) (type->color :symbol)))
 (defn- render-number [o k] (code-text o k (type->color :number)))
-(defn- render-string [o k] (code-text o k (type->color :string)))
+(defn- render-string [o k] (code-text o (str "\"" k "\"") (type->color :string)))
 
 (def ^:private sep "0.5em")
 
@@ -86,12 +88,13 @@
                                      :children (->> k (map (partial render-tuple o)))] (type->color :map)))
 (defn- render-misc [o k t]
   (print "Unknown value" k " of " t)
-  (code-box o (pp/pretty-print k) (type->color :misc)))
+  (code-box o k (type->color :misc)))
 
 (defn render [o code]
   (let [value (:value code)
         type (:type code)]
     (case type
+      :nil (render-nil o value)
       :vector [render-vector o value]
       :keyword [render-keyword o value]
       :symbol [render-symbol o value]

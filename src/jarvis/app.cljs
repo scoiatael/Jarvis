@@ -4,34 +4,39 @@
             [garden.core :refer [css]]
             [jarvis.lifecycle :as lifecycle]
             [jarvis.state :as s]
-            [jarvis.types :as t]
+            [jarvis.syntax.types :as t]
+            [jarvis.syntax.pretty-print :as pp]
             [jarvis.font :as font]
             [jarvis.colors.solarized :as sol]
-            [jarvis.pretty-print :as pp]
             [jarvis.render :as r]))
+
+(defonce ^:private *introspect* (atom false))
+(defonce ^:private *show-code-box* (atom false))
+(defonce ^:private *show-right-side* (atom false))
 
 (defn- edit-elem [elem index]
   [input-textarea
    :on-change #(do
-                 (s/push-code % index)
+                 (lifecycle/push-code % index)
                  (if (nil? (s/error!)) (s/reset-modal)))
-   :model (pp/pretty-print elem)
+   :model (pp/pp elem)
    :width "inherit"])
 
 (defn- render-code [active item index]
   (let [rendered (r/render {:on-hover #(s/set-active index)
                             :on-click #(s/set-modal [item index])}
-                           (-> item t/parse))]
+                           (if @*introspect*
+                             (t/parse item)
+                             item))]
       [rc/border
-       ;; :style {:max-width "100%"}
        :border (str "1px dashed " (if (= active index) sol/red "transparent"))
        :child rendered]))
 
-(defn- render-codes [cs a]
+(defn- render-codes [codes active]
   [v-box
    :align :start
    :style {:max-width "100%"}
-   :children (map-indexed #(render-code a %2 %1) cs)])
+   :children (map-indexed (fn [index item] [render-code active item index]) codes)])
 
 (defn- render-error [error]
   [rc/modal-panel :child (.-message error)
@@ -46,8 +51,6 @@
    :backdrop-color "#666666"
    :backdrop-opacity 0.4
    :backdrop-on-click s/reset-modal])
-
-(defonce show-right-side (atom false))
 
 (defn- main-component []
   (let [codes (s/nodes!)
@@ -65,19 +68,19 @@
 
                              [rc/md-circle-icon-button
                               :md-icon-name "zmdi-plus"
-                              :on-click s/add-empty-node]
+                              :on-click lifecycle/add-new-node]
 
                              [rc/md-circle-icon-button
                               :md-icon-name "zmdi-minus"
-                              :on-click s/pop-code
-                              :disabled? (> 2 (count codes))]]]
+                              :on-click lifecycle/pop-code
+                              :disabled? (< (count codes) 1)]]]
 
                 [gap
                  :size "1em"]
 
 
                 (let [code (s/code!)]
-                  (if (and @show-right-side (not= nil? code))
+                  (if (and @*show-right-side* (not= nil? code))
                     [v-box
                      :size "1"
                      :style {:font-family font/code}
@@ -88,8 +91,6 @@
 
                                 [box
                                  :child [:div (-> code t/parse pp/pretty-print)]]]]))]]))
-
-(defonce show-code-box (atom false))
 
 (defn root-component []
   (let [modal (s/modal!)
@@ -102,7 +103,7 @@
 
                 [gap :size "1"]
 
-                (if (and @show-code-box (not= nil code))
+                (if (and @*show-code-box* (not= nil code))
 
                   [box
                    :width "inherit"

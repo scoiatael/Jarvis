@@ -20,7 +20,7 @@
 
 (defn- handler [ch err res]
   (if-not (nil? err) (util/error! "nREPL error: " err))
-  (util/log! "nREPL response: " res)
+  ;; (util/log! "nREPL response: " res)
   (if-let [val (.-value (aget res 0))]
     (go (>! ch res))
     (util/error! "No value received: " res)))
