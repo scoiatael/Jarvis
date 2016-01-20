@@ -25,6 +25,11 @@
          (nrepl/launch! {}
                         (partial ipc/reply! ev "server-started"))))
 
+  (.on ipc/main "kill-server"
+       (fn [ev arg]
+         (nrepl/kill!
+          (partial ipc/reply! ev "server-killed"))))
+
   ;; error listener
   (.on nodejs/process "error"
     (fn [err] (.log js/console err)))
