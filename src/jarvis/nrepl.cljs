@@ -6,7 +6,7 @@
 
 (def ^:private Client (nodejs/require "nrepl-client"))
 
-(def ^:private *connection* (atom nil))
+(defonce ^:private *connection* (atom nil))
 
 (def ^:private port 31339)
 

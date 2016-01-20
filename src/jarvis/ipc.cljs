@@ -4,6 +4,6 @@
             [jarvis.util :as util]
             [jarvis.nrepl :as nrepl]))
 
-(defonce renderer (.-ipcRenderer (nodejs/require "electron")))
+(def renderer (.-ipcRenderer (nodejs/require "electron")))
 
 (defn start-server! [params] (.send renderer "start-server" (clj->js params)))

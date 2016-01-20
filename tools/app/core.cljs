@@ -48,7 +48,7 @@
        (reset! *win* (BrowserWindow. (clj->js {:fullscreen true :title "Jarvis"})))
 
        ;; when no optimize comment out
-       (.loadUrl @*win* (str "file://" (.resolve path (js* "__dirname") "../index.html")))
+       (.loadURL @*win* (str "file://" (.resolve path (js* "__dirname") "../index.html")))
 
        (.on @*win* "closed" (fn [] (reset! *win* nil))))))
 
