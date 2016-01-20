@@ -46,7 +46,7 @@
 
 ;; Primitives
 (defn- render-nil [o _] (code-text o "nil" (type->color :keyword)))
-(defn- render-keyword [o k] (code-text o k (type->color :keyword)))
+(defn- render-keyword [o k] (code-text o (str k) (type->color :keyword)))
 (defn- prettify-symbol [s]
   (let [stringified (str s)]
     (case (-> stringified clojure.string/trim)

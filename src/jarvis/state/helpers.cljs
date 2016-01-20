@@ -3,6 +3,8 @@
 
 (defrecord JarvisState [nodes active error modal])
 
+(def empty-state (JarvisState. [] 0 nil nil))
+
 (defn nodes [state]
   (:nodes state))
 
