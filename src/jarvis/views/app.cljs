@@ -13,7 +13,7 @@
             [jarvis.util.logger :as util]))
 
 (defonce ^:private *show-code-box* (atom false))
-(defonce ^:private *show-right-side* (atom true))
+(defonce ^:private *introspect* (atom true))
 
 (defn- edit-elem [state modal]
   (let [index (last modal)
@@ -26,9 +26,10 @@
      :width "inherit"]))
 
 (defn- render-code [active item index]
-  (let [rendered (r/render {:on-hover #(lifecycle/set-active index)
+  (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)
+        rendered (r/render {:on-hover #(lifecycle/set-active index)
                             :on-click #(lifecycle/set-modal [item index])}
-                             item)]
+                             item-to-show)]
       [rc/border
        :border (str "1px dashed " (if (= active index) sol/red "transparent"))
        :child rendered]))
@@ -52,16 +53,6 @@
    :backdrop-color "#666666"
    :backdrop-opacity 0.4
    :backdrop-on-click lifecycle/reset-modal])
-
-(defn- render-state-code [state code]
-  (if (satisfies? walk/Info code)
-    (let [parsed-code (->> code walk/normalize sc/parse)]
-      (util/log! parsed-code)
-      [v-box
-       :size "1"
-       :style {:font-family font/code}
-       :children [[box
-                   :child [r/render {} parsed-code]]]])))
 
 (defn- render-circle-controllers [codes]
   [v-box
@@ -88,13 +79,7 @@
                  :size "1"
                  :child [render-codes codes active]]
 
-                [render-circle-controllers codes]
-
-                [gap
-                 :size "1em"]
-
-                  (if (and @*show-right-side* (not= nil? code))
-                    [render-state-code state code])]]))
+                [render-circle-controllers codes]]]))
 
 (defn main [state-getter]
   (let [state (state-getter)
