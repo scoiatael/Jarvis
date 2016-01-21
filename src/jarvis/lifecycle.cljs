@@ -3,7 +3,7 @@
             [jarvis.util.file :as file]
             [jarvis.state.core :as state]
             [jarvis.syntax.parser :as parser]
-            [jarvis.syntax.types :as t]
+            [jarvis.syntax.core :as t]
             [jarvis.util.logger :as util]))
 
 (defn push-code
@@ -21,7 +21,7 @@
 
 (defn push-file [contents]
   (state/reset-state!)
-  (let [parsed (parser/file contents)]
+  (let [parsed (->> contents parser/file (map t/parse))]
     (map state/push-code! parsed)))
 
 (defn add-new-node []

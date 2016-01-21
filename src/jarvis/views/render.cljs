@@ -2,6 +2,7 @@
   (:require [re-com.core :as rc]
             [re-com.box :refer [flex-flow-style]]
             [jarvis.views.colors.solarized :as sol]
+            [jarvis.syntax.walk :as walk]
             [jarvis.views.font :as font]
             [jarvis.util.logger :as util]))
 
@@ -53,7 +54,7 @@
       "quote" "'"
       stringified)))
 (defn- render-symbol [o k] (code-text o (prettify-symbol k) (type->color :symbol)))
-(defn- render-number [o k] (code-text o k (type->color :number)))
+(defn- render-number [o k] (code-text o (str k) (type->color :number)))
 (defn- render-string [o k] (code-text o (str "\"" k "\"") (type->color :string)))
 
 (def ^:private sep "0.5em")
@@ -88,12 +89,13 @@
                                      :gap sep
                                      :children (->> k (map (partial render-tuple o)))] (type->color :map)))
 (defn- render-misc [o k t]
-  (print "Unknown value" k " of " t)
-  (code-box o k (type->color :misc)))
+  (util/error! "Unknown value" k " of " t)
+  (code-box o (str k) (type->color :misc)))
 
 (defn render [o code]
-  (let [value (:value code)
-        type (:type code)]
+  ;; pre satisfies? Info code
+  (let [value (walk/value code)
+        type (-> code walk/info :type)]
     (case type
       :nil (render-nil o value)
       :vector [render-vector o value]

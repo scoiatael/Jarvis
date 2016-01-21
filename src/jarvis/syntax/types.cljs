@@ -15,6 +15,8 @@
                               (= cljs.core/Keyword vty) :keyword
                               :else vty)))
 
-(defn annotate-type [code] {:value code :type (simple-type code)})
+(defn annotate-type [code]
+  ;; {:pre (satisfies? walk/Info code)}
+  (walk/with-info code {:type (-> code walk/value simple-type)}))
 
 (defn parse [code] (walk/postwalk annotate-type code))
