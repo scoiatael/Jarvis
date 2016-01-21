@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.122" :exclusions [org.apache.ant/ant]]
+                 [org.clojure/clojurescript "1.7.228" :exclusions [org.apache.ant/ant]]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [re-com "0.7.0-alpha1"]
                  [re-frame "0.5.0"]
@@ -35,7 +35,7 @@
                                            "node_modules/closurecompiler-externs/process.js"]
                                  :main "app.core"
                                  :warnings true
-                                 :elide-asserts true
+                                 ;; :elide-asserts true
                                  :target :nodejs
 
                                  ;; no optimize compile (dev)
@@ -61,7 +61,7 @@
                           :compiler {:output-to "app/js/front.js"
                                      :externs ["app/js/externs.js"]
                                      :warnings true
-                                     :elide-asserts true
+                                     ;; :elide-asserts true
 
                                      ;; no optimize compile (dev)
                                      ;;:optimizations :none
