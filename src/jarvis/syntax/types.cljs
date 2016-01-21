@@ -6,6 +6,7 @@
                               (nil? value) :nil
                               (number? value) :number
                               (string? value) :string
+                              (record? value) :record
                               (= cljs.core/PersistentVector vty) :vector
                               (= cljs.core/PersistentHashMap vty) :map
                               (= cljs.core/PersistentArrayMap vty) :map

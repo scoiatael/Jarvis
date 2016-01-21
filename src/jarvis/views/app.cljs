@@ -4,15 +4,16 @@
             [garden.core :refer [css]]
             [jarvis.lifecycle :as lifecycle]
             [jarvis.state.helpers :as s]
-            [jarvis.syntax.types :as t]
+            [jarvis.syntax.core :as sc]
             [jarvis.syntax.pretty-print :as pp]
             [jarvis.views.font :as font]
             [jarvis.views.colors.solarized :as sol]
-            [jarvis.views.render :as r]))
+            [jarvis.views.render :as r]
+            [jarvis.syntax.walk :as walk]
+            [jarvis.util.logger :as util]))
 
-(defonce ^:private *introspect* (atom false))
 (defonce ^:private *show-code-box* (atom false))
-(defonce ^:private *show-right-side* (atom false))
+(defonce ^:private *show-right-side* (atom true))
 
 (defn- edit-elem [state modal]
   (let [index (last modal)
@@ -27,9 +28,7 @@
 (defn- render-code [active item index]
   (let [rendered (r/render {:on-hover #(lifecycle/set-active index)
                             :on-click #(lifecycle/set-modal [item index])}
-                           (if @*introspect*
-                             (t/parse item)
-                             item))]
+                             item)]
       [rc/border
        :border (str "1px dashed " (if (= active index) sol/red "transparent"))
        :child rendered]))
@@ -55,16 +54,14 @@
    :backdrop-on-click lifecycle/reset-modal])
 
 (defn- render-state-code [state code]
-  [v-box
-   :size "1"
-   :style {:font-family font/code}
-   :children [[box
-               :child [:div (pp/pretty-print state)]]
-
-              [gap :size "2em"]
-
-              [box
-               :child [:div (-> code t/parse pp/pretty-print)]]]])
+  (if (satisfies? walk/Info code)
+    (let [parsed-code (->> code walk/normalize sc/parse)]
+      (util/log! parsed-code)
+      [v-box
+       :size "1"
+       :style {:font-family font/code}
+       :children [[box
+                   :child [r/render {} parsed-code]]]])))
 
 (defn- render-circle-controllers [codes]
   [v-box
@@ -102,20 +99,10 @@
 (defn main [state-getter]
   (let [state (state-getter)
         modal (s/modal state)
-        error (s/error state)
-        active (s/active state)
-        code (s/code state)]
+        error (s/error state)]
     [v-box
      :height "inherit"
      :children [[main-component state]
-
-                [gap :size "1"]
-
-                (if (and @*show-code-box* (not= nil code))
-
-                  [box
-                   :width "inherit"
-                   :child (edit-elem state [code active])])
 
                 (if-not (nil? error)
                   (render-error error)

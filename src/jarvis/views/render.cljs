@@ -73,21 +73,43 @@
 
 (defn- render-list [o k] (render-seq o k (type->color :list)))
 
-(defn- render-tuple [o k] (let [f (first k)
-                              s (second k)]
-                            [rc/v-box
-                             :size "0 1 auto"
-                             :children [(render o f)
-                                        [rc/md-icon-button
-                                         :md-icon-name "zmdi-long-arrow-down"
-                                         :disabled? true]
-                                        (render o s)]]))
+(defn- render-tuple [o f s]
+  [rc/v-box
+   :size "0 1 auto"
+   :children [f
+              [rc/md-icon-button
+               :md-icon-name "zmdi-long-arrow-down"
+               :disabled? true]
+              s]])
 
-(defn- render-map [o k] (code-box o [rc/h-box
-                                     :size "0 1 auto"
-                                     :style (flex-flow-style "row wrap")
-                                     :gap sep
-                                     :children (->> k (map (partial render-tuple o)))] (type->color :map)))
+(defn- render-tuple-seq [o s c] (code-box o
+                                          [rc/h-box
+                                           :size "0 1 auto"
+                                           :style (flex-flow-style "row wrap")
+                                           :gap sep
+                                           :children  (map
+                                                       #(render-tuple o
+                                                                      (->> % first)
+                                                                      (->> % last))
+                                                       s)]
+                                          c))
+
+(defn- render-map [o k] (render-tuple-seq
+                         o
+                         (->> k
+                              (map
+                               #(list (->> % first (render o))
+                                      (->> % last (render o)))))
+                         (type->color :map)))
+
+(defn- render-record [o k] (render-tuple-seq
+                            o
+                            (->> k
+                                 (map
+                                  #(list (->> % first (render-symbol o))
+                                         (->> % last (render o)))))
+                            (type->color :map)))
+
 (defn- render-misc [o k t]
   (util/error! "Unknown value" k " of " t)
   (code-box o (str k) (type->color :misc)))
@@ -104,5 +126,6 @@
       :number [render-number o value]
       :string [render-string o value]
       :list [render-list o value]
+      ;; :record [render-record o value]
       :map [render-map o value]
       [render-misc o value type])))

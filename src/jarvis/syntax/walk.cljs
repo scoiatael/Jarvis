@@ -14,7 +14,6 @@
   (info [this] (:inf this))
   (with-info [this inf] (InfoImpl. (:val this) (into (or (:inf this) {})
                                                      inf))))
-
 (defn walk
   [inner outer form]
   (cond
@@ -37,3 +36,9 @@
 
 (defn strip [form]
   (postwalk value form))
+
+(defn normalize-record [f]
+  (if (record? f) (into {} f) f))
+
+(defn normalize [form]
+  (walk normalize identity (normalize-record form)))
