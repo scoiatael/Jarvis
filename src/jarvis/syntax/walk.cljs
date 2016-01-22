@@ -14,6 +14,11 @@
   (info [this] (:inf this))
   (with-info [this inf] (InfoImpl. (:val this) (into (or (:inf this) {})
                                                      inf))))
+(defn with-err [info err]
+  (if (nil? err)
+    info
+    (update-in info [:inf :errors] #(conj (or % []) err))))
+
 (defn walk
   [inner outer form]
   (cond

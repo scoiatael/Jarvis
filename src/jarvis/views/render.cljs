@@ -13,7 +13,7 @@
      :attr {:on-click on-click
             :on-mouse-over on-hover}
      :size "0 1 auto"
-     :style {:border (str "solid 2px " color)
+     :style {:border (str "solid 3px " color)
              :border-radius "2px"
              :height "100%"
              :padding "5px"

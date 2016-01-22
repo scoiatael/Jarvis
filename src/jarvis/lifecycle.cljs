@@ -6,6 +6,12 @@
             [jarvis.syntax.core :as t]
             [jarvis.util.logger :as util]))
 
+(defn- ingest-form [form]
+  (->> form
+       t/parse
+       t/check
+       ))
+
 (defn push-code
   ([code]
    (push-code code nil))
@@ -16,12 +22,12 @@
      (if (nil? error)
        (do
          (nrepl/eval! form)
-         (state/push-code! (t/parse form) index))
+         (state/push-code! (ingest-form form) index))
        (state/set-error! error)))))
 
 (defn push-file [contents]
   (state/reset-state!)
-  (let [parsed (->> contents parser/file (map t/parse))]
+  (let [parsed (->> contents parser/file (map ingest-form))]
     (map state/push-code! parsed)))
 
 (defn add-new-node []
