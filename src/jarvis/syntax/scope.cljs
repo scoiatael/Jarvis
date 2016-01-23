@@ -13,6 +13,7 @@
    (contains? keyword-introducing-scope (-> value first walk/value))))
 
 (defprotocol Scope
+  (fn-arity [this fn-name])
   (var-defined? [this var]))
 
 (def ^:private ^:const global-vars
@@ -26,15 +27,24 @@
 
 (defrecord EmptyScope []
   Scope
+  (fn-arity [this fn-name] (if (var-defined? this fn-name) :any nil))
   (var-defined? [this var] (contains? global-vars var)))
 
 (defrecord LetScope [root bindings]
   Scope
+  (fn-arity [this fn-name]
+    (let [fn-def (some #(= fn-name (first %)) (->> this :bindings (partition 2)))]
+      (if (nil? fn-def)
+        (fn-arity (:root this) fn-name)
+        :any)))
   (var-defined? [this var] (or (list-contains? (->> this :bindings (partition 2) (map first)) var)
                                (var-defined? (:root this) var))))
 
 (defrecord FnScope [root arguments]
   Scope
+  (fn-arity [this fn-name] (if (list-contains? (:arguments this) fn-name)
+                              :any
+                              (fn-arity (:root this) fn-name)))
   (var-defined? [this var] (or (list-contains? (:arguments this) var)
                                (var-defined? (:root this) var))))
 
