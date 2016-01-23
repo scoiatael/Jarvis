@@ -30,7 +30,7 @@
 
 (defrecord LetScope [root bindings]
   Scope
-  (var-defined? [this var] (or (list-contains? var (->> this :bindings (partition 2) (map first)))
+  (var-defined? [this var] (or (list-contains? (->> this :bindings (partition 2) (map first)) var)
                                (var-defined? (:root this) var))))
 
 (defrecord FnScope [root arguments]
