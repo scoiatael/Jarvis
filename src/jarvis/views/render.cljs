@@ -6,9 +6,22 @@
             [jarvis.views.font :as font]
             [jarvis.util.logger :as util]))
 
+(defn- render-errors [errors]
+  (let [has-errors? (not (empty? errors))]
+    (if has-errors?
+      [rc/md-circle-icon-button
+       :tooltip (str errors)
+       :style {:z-index 1
+               :color sol/red}
+       :size :smaller
+       :class "btn-danger"
+       :md-icon-name "zmdi-alert-triangle"]
+      [:div])))
+
 (defn- code-box [o code color]
   (let [on-click (:on-click o)
-        on-hover (:on-hover o)]
+        on-hover (:on-hover o)
+        errors (:errors o)]
     [rc/box
      :attr {:on-click on-click
             :on-mouse-over on-hover}
@@ -20,11 +33,13 @@
              :text-align "center"
              :font-family font/code
              :margin "0.5em"}
-     :child  code]))
+     :child  [rc/v-box
+              :children [[render-errors errors] code]]]))
 
 (defn- code-text [o code color]
   (let [on-click (:on-click o)
-        on-hover (:on-hover o)]
+        on-hover (:on-hover o)
+        errors (:errors o)]
     [rc/box
      :attr {:on-click on-click
             :on-mouse-over on-hover}
@@ -32,7 +47,10 @@
      :style {:color color
              :text-align "center"
              :font-family font/code}
-     :child  code]))
+     :child  [rc/v-box
+              :children [code [render-errors errors]]]]))
+
+(defn- dissoc-errors [o] (dissoc o :errors))
 
 (def ^:private type->color {
                             :keyword sol/yellow
@@ -67,7 +85,7 @@
                :align :center
                :style (flex-flow-style "row wrap")
                :gap sep
-               :children (->> k (map (partial render o)))] c))
+               :children (->> k (map (partial render (dissoc-errors o))))] c))
 
 (defn- render-vector [o k] (render-seq o k (type->color :vector)))
 
@@ -88,7 +106,7 @@
                                            :style (flex-flow-style "row wrap")
                                            :gap sep
                                            :children  (map
-                                                       #(render-tuple o
+                                                       #(render-tuple (dissoc-errors o)
                                                                       (->> % first)
                                                                       (->> % last))
                                                        s)]
@@ -98,16 +116,16 @@
                          o
                          (->> k
                               (map
-                               #(list (->> % first (render o))
-                                      (->> % last (render o)))))
+                               #(list (->> % first (render (dissoc-errors o)))
+                                      (->> % last (render (dissoc-errors o))))))
                          (type->color :map)))
 
 (defn- render-record [o k] (render-tuple-seq
                             o
                             (->> k
                                  (map
-                                  #(list (->> % first (render-symbol o))
-                                         (->> % last (render o)))))
+                                  #(list (->> % first (render-symbol (dissoc-errors o)))
+                                         (->> % last (render (dissoc-errors o))))))
                             (type->color :map)))
 
 (defn- render-misc [o k t]
@@ -117,16 +135,18 @@
 (defn render [o code]
   ;; pre satisfies? Info code
   (let [value (walk/value code)
-        type (-> code walk/info :type)]
+        type (-> code walk/info :type)
+        errors (-> code walk/info :errors)
+        opts (update-in o [:errors] #(into % errors))]
     (case type
-      :bool (render-keyword o value)
-      :nil (render-nil o value)
-      :vector [render-vector o value]
-      :keyword [render-keyword o value]
-      :symbol [render-symbol o value]
-      :number [render-number o value]
-      :string [render-string o value]
-      :list [render-list o value]
-      ;; :record [render-record o value]
-      :map [render-map o value]
-      [render-misc o value type])))
+      :bool (render-keyword opts value)
+      :nil (render-nil opts value)
+      :vector [render-vector opts value]
+      :keyword [render-keyword opts value]
+      :symbol [render-symbol opts value]
+      :number [render-number opts value]
+      :string [render-string opts value]
+      :list [render-list opts value]
+      ;; :record [render-record opts value]
+      :map [render-map opts value]
+      [render-misc opts value type])))

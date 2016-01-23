@@ -13,7 +13,7 @@
             [jarvis.util.logger :as util]))
 
 (defonce ^:private *show-code-box* (atom false))
-(defonce ^:private *introspect* (atom true))
+(defonce ^:private *introspect* (atom false))
 
 (defn- edit-elem [state modal]
   (let [index (last modal)
@@ -27,9 +27,7 @@
 
 (defn- render-code [active item index]
   (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)
-        rendered (r/render {:on-hover #(lifecycle/set-active index)
-                            :on-click #(lifecycle/set-modal [item index])}
-                             item-to-show)]
+        rendered (r/render {} item-to-show)]
       [rc/border
        :border (str "1px dashed " (if (= active index) sol/red "transparent"))
        :child rendered]))
