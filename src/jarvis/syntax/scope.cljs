@@ -6,11 +6,8 @@
     'let
     'fn})
 
-(defn introduces-scope? [type value]
-  (and
-   (= :list type)
-   (not (empty? value))
-   (contains? keyword-introducing-scope (-> value first walk/value))))
+(defn introduces-scope? [value]
+  (contains? keyword-introducing-scope (-> value first walk/value)))
 
 (defprotocol Scope
   (fn-arity [this fn-name])
@@ -33,11 +30,11 @@
 (defrecord LetScope [root bindings]
   Scope
   (fn-arity [this fn-name]
-    (let [fn-def (some #(= fn-name (first %)) (->> this :bindings (partition 2)))]
+    (let [fn-def (some #(= fn-name (-> % first walk/info)) (->> this :bindings (partition 2)))]
       (if (nil? fn-def)
         (fn-arity (:root this) fn-name)
-        :any)))
-  (var-defined? [this var] (or (list-contains? (->> this :bindings (partition 2) (map first)) var)
+        (:fn-arity fn-def))))
+  (var-defined? [this var] (or (list-contains? (->> this :bindings (partition 2) (map #(-> % first walk/value))) var)
                                (var-defined? (:root this) var))))
 
 (defrecord FnScope [root arguments]
@@ -49,7 +46,7 @@
                                (var-defined? (:root this) var))))
 
 (defn- scope-of-let [root-scope value]
-  (LetScope. root-scope (-> value (nth 1) walk/value walk/strip)))
+  (LetScope. root-scope (-> value (nth 1) walk/value)))
 
 (defn- scope-of-defn [root-scope value]
   (let [arguments (-> value (nth 2) walk/value walk/strip)]
@@ -60,8 +57,9 @@
 
 (defn- scope [root-scope code]
   (let [type (-> code walk/info :type)
+        is-call (-> code walk/info :is-call)
         value (walk/value code)]
-    (if (introduces-scope? type value)
+    (if (and is-call (introduces-scope? value))
       (case (-> value first walk/value)
         let (scope-of-let root-scope value)
         defn (scope-of-defn root-scope value)

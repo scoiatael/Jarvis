@@ -119,6 +119,7 @@
   (let [value (walk/value code)
         type (-> code walk/info :type)]
     (case type
+      :bool (render-keyword o value)
       :nil (render-nil o value)
       :vector [render-vector o value]
       :keyword [render-keyword o value]

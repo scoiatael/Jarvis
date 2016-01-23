@@ -3,6 +3,8 @@
 
 (defn simple-type [value] (let [vty (type value)]
                             (cond
+                              (false? value) :bool
+                              (true? value) :bool
                               (nil? value) :nil
                               (number? value) :number
                               (string? value) :string
