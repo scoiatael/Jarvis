@@ -34,6 +34,8 @@
              :font-family font/code
              :margin "0.5em"}
      :child  [rc/v-box
+              :size "0 1 auto"
+              :align :center
               :children [[render-errors errors] code]]]))
 
 (defn- code-text [o code color]
