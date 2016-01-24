@@ -15,28 +15,26 @@
 (defonce ^:private *show-code-box* (atom false))
 (defonce ^:private *introspect* (atom false))
 
-(defn- edit-elem [state modal]
-  (let [index (last modal)
-        elem (first modal)]
-    [input-textarea
-     :on-change #(do
-                   (lifecycle/push-code % index)
-                   (if (nil? (s/error state)) (lifecycle/reset-modal)))
-     :model (pp/pp elem)
-     :width "inherit"]))
+(defn- edit-elem [state]
+  [input-textarea
+   :on-change #(do
+                 (lifecycle/push-code %)
+                 (if (nil? (s/error state)) (lifecycle/reset-modal)))
+   :model ""
+   :width "inherit"])
 
-(defn- render-code [active item index]
+(defn- render-code [item index]
   (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)
         rendered (r/render {} item-to-show)]
       [rc/border
-       :border (str "1px dashed " (if (= active index) sol/red "transparent"))
+       :border (str "1px dashed " "transparent")
        :child rendered]))
 
-(defn- render-codes [codes active]
+(defn- render-codes [codes]
   [v-box
    :align :start
    :style {:max-width "100%"}
-   :children (map-indexed (fn [index item] [render-code active item index]) codes)])
+   :children (map-indexed (fn [index item] [render-code item index]) codes)])
 
 (defn- render-error [error]
   [rc/modal-panel :child (.-message error)
@@ -45,8 +43,9 @@
    :backdrop-opacity 0.4
    :backdrop-on-click lifecycle/reset-error])
 
-(defn- render-modal [state modal]
-  [rc/modal-panel :child (apply edit-elem [state modal])
+(defn- render-modal [state]
+  [rc/modal-panel
+   :child [edit-elem state]
    :wrap-nicely? true
    :backdrop-color "#666666"
    :backdrop-opacity 0.4
@@ -66,16 +65,14 @@
                :disabled? (< (count codes) 1)]]])
 
 (defn- main-component [state]
-  (let [codes (s/nodes state)
-        active (s/active state)
-        code (s/code state)]
+  (let [codes (s/nodes state)]
     [h-box
      :style { :height "100%" }
      :children [[box :size "200px" :child "Nav"]
 
                 [box
                  :size "1"
-                 :child [render-codes codes active]]
+                 :child [render-codes codes]]
 
                 [render-circle-controllers codes]]]))
 
@@ -91,7 +88,7 @@
                   (render-error error)
 
                   (if-not (nil? modal)
-                    (render-modal state modal)))]]))
+                    (render-modal state)))]]))
 
 (defn styles []
   (css [:body

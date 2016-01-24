@@ -1,6 +1,7 @@
 (ns jarvis.state.nodes-map
   (:require [jarvis.util.logger :as util]
-            [jarvis.syntax.walk :as walk]))
+            [jarvis.syntax.walk :as walk]
+            [jarvis.util.logger :as util]))
 
 (defprotocol Stub
   (expand [this nmap]))

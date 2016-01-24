@@ -12,33 +12,27 @@
        t/check
        ))
 
-(defn push-code
-  ([code]
-   (push-code code nil))
-  ([code index]
-   (let [parsed (parser/form code)
-         error (:error parsed)
-         form (:form parsed)]
-     (if (nil? error)
-       (do
-         (nrepl/eval! form)
-         (state/push-code! (ingest-form form) index))
-       (state/set-error! error)))))
+(defn push-code [code]
+  (let [parsed (parser/form code)
+        error (:error parsed)
+        form (:form parsed)]
+    (if (nil? error)
+      (do
+        (nrepl/eval! form)
+        (state/push-code! (ingest-form form)))
+      (state/set-error! error))))
 
 (defn push-file [contents]
   (state/reset-state!)
   (let [parsed (->> contents parser/file (map ingest-form))]
     (map state/push-code! parsed)))
 
+(defn set-modal [] (state/set-modal! true))
 (defn add-new-node []
-  (state/push-code! (t/parse '()))
-  (let [last (- (state/nodes-length) 1)]
-    (state/set-modal! [(state/code last) last])))
+  (set-modal))
 
 (defn pop-code [] (state/pop-code!))
 
-(defn set-active [active] (state/set-active! active))
-(defn set-modal [modal] (state/set-modal! modal))
 (defn reset-error [] (state/reset-error!))
 (defn reset-modal [] (state/reset-modal!))
 
