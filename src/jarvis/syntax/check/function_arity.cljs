@@ -1,6 +1,7 @@
 (ns jarvis.syntax.check.function-arity
   (:require [jarvis.syntax.walk :as walk]
-            [jarvis.syntax.scope :as scope]))
+            [jarvis.syntax.scope :as scope]
+            [jarvis.util.logger :as util]))
 
 (defn- arity-error [fn-arity arg-num]
   (cond
@@ -15,8 +16,9 @@
         is-call (-> code walk/info :is-call)
         scope (-> code walk/info :scope)]
     (if is-call
-      (let [fn-arity (scope/fn-arity scope (-> value first walk/value))
-            arg-num (- (count value) 2)]
+      (let [fn-name (-> value first walk/value)
+            fn-arity (scope/fn-arity scope fn-name)
+            arg-num (- (count value) 1)]
         (arity-error fn-arity arg-num))
       nil)))
 
