@@ -41,7 +41,6 @@
   Scope
   (fn-arity [this fn-name]
     (let [fn-def (->> this bindings-let (filter #(= fn-name (list->fn-name %))) first last)]
-      (util/log! "Found def: " fn-name " -> " fn-def)
       (if (nil? fn-def)
         (fn-arity (:root this) fn-name)
         (-> fn-def walk/info :fn-arity))))
