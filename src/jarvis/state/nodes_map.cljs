@@ -72,7 +72,7 @@
 (defn clean-garbage [nmap]
   (let [valid-indexes (all-indexes nmap)]
     (-> nmap
-        (update-in [:nmap] (fn [nmap] (filter #(contains? valid-indexes (first %)) nmap))))))
+        (update-in [:nmap] (fn [nmap] (into {} (filter #(contains? valid-indexes (first %)) nmap)))))))
 
 (defn pop-root [nmap]
   (let [root-value (-> nmap :root (expand (:nmap nmap)))
