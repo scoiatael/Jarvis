@@ -1,6 +1,9 @@
 (ns jarvis.syntax.check.core
   (:require [jarvis.syntax.check.variable-defined :as variable-defined]
-            [jarvis.syntax.check.function-arity :as function-arity]))
+            [jarvis.syntax.check.function-arity :as function-arity]
+            [jarvis.util.logger :as util]))
 
-(defn check [code] (->> code variable-defined/check function-arity/check))
+(defn check [err-cb code]
+  (variable-defined/check err-cb code)
+  (function-arity/check err-cb code))
 

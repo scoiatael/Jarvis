@@ -17,7 +17,7 @@
 (defn with-err [info err]
   (if (nil? err)
     info
-    (update-in info [:inf :errors] #(conj (or % []) err))))
+    (update-in info [:inf :errors] #(conj (or % #{}) err))))
 
 (defn walk
   [inner outer form]
@@ -47,3 +47,5 @@
 
 (defn normalize [form]
   (walk normalize identity (normalize-record form)))
+
+(defn each [f form] (postwalk (fn [in] (f in) in) form))

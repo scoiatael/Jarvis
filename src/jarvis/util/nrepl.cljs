@@ -1,6 +1,6 @@
 (ns jarvis.util.nrepl
   (:require [cljs.nodejs :as nodejs]
-            [cljs.core.async :as async :refer [<!]]
+            [cljs.core.async :as async :refer [<! >!]]
             [jarvis.util.logger :as util])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 

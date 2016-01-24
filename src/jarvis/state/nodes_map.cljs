@@ -90,3 +90,6 @@
 (defn root-length [nmap]
   (let [root-value (-> nmap :root (expand (:nmap nmap)))]
     (count root-value)))
+
+(defn update-node [nmap node-id update]
+  (update-in nmap [:nmap node-id] update))

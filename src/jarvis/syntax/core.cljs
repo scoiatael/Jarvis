@@ -7,4 +7,4 @@
 
 (defn parse [code] (->> code walk/wrap types/parse function/parse scope/parse))
 
-(defn check [code] (->> code check/check))
+(defn check [ch code] (check/check ch code))

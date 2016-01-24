@@ -57,3 +57,6 @@
 
 (defn pop-code [state]
   (update-in state [:nodes] nmap/pop-root))
+
+(defn update-node [state node-id update]
+  (update-in state [:nodes] #(nmap/update-node % node-id update)))

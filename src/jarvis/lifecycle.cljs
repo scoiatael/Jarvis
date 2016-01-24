@@ -4,13 +4,28 @@
             [jarvis.state.core :as state]
             [jarvis.syntax.parser :as parser]
             [jarvis.syntax.core :as t]
+            [jarvis.syntax.walk :as walk]
             [jarvis.util.logger :as util]))
 
 (defn- ingest-form [form]
   (->> form
-       t/parse
-       t/check
-       ))
+       t/parse))
+
+(defn- add-error [id err]
+  (state/update-node id #(walk/with-err % err)))
+
+(defn- check-code [code]
+  (t/check add-error code))
+
+(defn each [f args]
+  (loop [s (seq args)]
+    (when-not (empty? s)
+      (f (first s))
+      (recur (rest s)))))
+
+(defn check []
+  (let [nodes (state/nodes)]
+    (each check-code nodes)))
 
 (defn push-code [code]
   (let [parsed (parser/form code)
@@ -19,13 +34,16 @@
     (if (nil? error)
       (do
         (nrepl/eval! form)
-        (state/push-code! (ingest-form form)))
+        (state/push-code! (ingest-form form))
+        ;; TODO: check only new code
+        (check))
       (state/set-error! error))))
 
 (defn push-file [contents]
   (state/reset-state!)
   (let [parsed (->> contents parser/file (map ingest-form))]
-    (map state/push-code! parsed)))
+    (map state/push-code! parsed)
+    (check)))
 
 (defn set-modal [] (state/set-modal! true))
 (defn add-new-node []
