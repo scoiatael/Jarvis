@@ -1,5 +1,6 @@
 (ns jarvis.syntax.scope
-  (:require [jarvis.syntax.walk :as walk]))
+  (:require [jarvis.syntax.walk :as walk]
+            [jarvis.util.logger :as util]))
 
 (def ^:private ^:const keyword-introducing-scope
   #{'defn
@@ -27,15 +28,26 @@
   (fn-arity [this fn-name] (if (var-defined? this fn-name) :any nil))
   (var-defined? [this var] (contains? global-vars var)))
 
+(defn- bindings-let [this]
+  (->> this :bindings (partition 2)))
+
+(defn- list->fn-name [this]
+  (let [name (first this)]
+      (if (satisfies? walk/Info name)
+        (walk/value name)
+        nil)))
+
 (defrecord LetScope [root bindings]
   Scope
   (fn-arity [this fn-name]
-    (let [fn-def (some #(= fn-name (-> % first walk/info)) (->> this :bindings (partition 2)))]
+    (let [fn-def (->> this bindings-let (filter #(= fn-name (list->fn-name %))) first last)]
+      (util/log! "Found def: " fn-name " -> " fn-def)
       (if (nil? fn-def)
         (fn-arity (:root this) fn-name)
-        (:fn-arity fn-def))))
-  (var-defined? [this var] (or (list-contains? (->> this :bindings (partition 2) (map #(-> % first walk/value))) var)
-                               (var-defined? (:root this) var))))
+        (-> fn-def walk/info :fn-arity))))
+  (var-defined? [this var]
+    (or (-> (->> this bindings-let (map list->fn-name)) (list-contains? var))
+        (var-defined? (:root this) var))))
 
 (defrecord FnScope [root arguments]
   Scope
