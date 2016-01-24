@@ -38,6 +38,12 @@
               :align :center
               :children [[render-errors errors] code]]]))
 
+(defn- error-text [errors code]
+  [rc/button
+   :label code
+   :class "btn-danger"
+   :tooltip (str errors)])
+
 (defn- code-text [o code color]
   (let [on-click (:on-click o)
         on-hover (:on-hover o)
@@ -49,8 +55,7 @@
      :style {:color color
              :text-align "center"
              :font-family font/code}
-     :child  [rc/v-box
-              :children [code [render-errors errors]]]]))
+     :child  (if (empty? errors) code [error-text errors code])]))
 
 (defn- dissoc-errors [o] (dissoc o :errors))
 
