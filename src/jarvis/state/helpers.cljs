@@ -2,9 +2,9 @@
   (:require [jarvis.util.logger :as util]
             [jarvis.state.nodes-map :as nmap]))
 
-(defrecord JarvisState [nodes active error modal])
+(defrecord JarvisState [nodes active error modal suggestions])
 
-(def empty-state (JarvisState. (nmap/fresh) 0 nil nil))
+(def empty-state (JarvisState. (nmap/fresh) 0 nil nil {}))
 
 (defn nodes [state]
   (-> state :nodes nmap/nodes))
@@ -17,6 +17,9 @@
 
 (defn modal [state]
   (:modal state))
+
+(defn suggestions [state]
+  (:suggestions state))
 
 (defn valid-index? [state index]
   (and (number? index) (< index (nodes-length state)) (< -1 index)))
@@ -60,3 +63,6 @@
 
 (defn update-node [state node-id update]
   (update-in state [:nodes] #(nmap/update-node % node-id update)))
+
+(defn update-suggestions [state suggestions]
+  (update-in state [:suggestions] (constantly suggestions)))

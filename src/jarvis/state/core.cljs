@@ -15,6 +15,8 @@
 (defn pop-code! [] (swap! state #(h/pop-code %)))
 (defn update-node [node-id update]
   (swap! state #(h/update-node % node-id update)))
+(defn update-suggestions [suggestions]
+  (swap! state #(h/update-suggestions % suggestions)))
 
 ;; Pure
 (defn nodes-length [] (h/nodes-length @state))

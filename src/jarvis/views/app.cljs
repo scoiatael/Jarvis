@@ -64,11 +64,20 @@
                :on-click lifecycle/pop-code
                :disabled? (< (count codes) 1)]]])
 
+(defn- render-namespace [name functions]
+  [v-box
+   :children (map (fn [item] (str item)) functions)])
+
+(defn- render-suggestions [suggestions]
+  [v-box
+   :children (map (fn [item] [render-namespace (first item) (last item)]) suggestions)])
+
 (defn- main-component [state]
-  (let [codes (s/nodes state)]
+  (let [codes (s/nodes state)
+        suggestions (s/suggestions state)]
     [h-box
      :style { :height "100%" }
-     :children [[box :size "200px" :child "Nav"]
+     :children [[box :size "200px" :child [render-suggestions suggestions]]
 
                 [box
                  :size "1"

@@ -7,6 +7,11 @@
             [jarvis.syntax.walk :as walk]
             [jarvis.util.logger :as util]))
 
+(def ^:const ^:private global-ns "clojure.core")
+
+(defn update-suggestions []
+  (nrepl/functions! (fn [ns-funs] (state/update-suggestions {"user" ns-funs}))))
+
 (defn- ingest-form [form]
   (->> form
        t/parse))
@@ -36,14 +41,16 @@
         (nrepl/eval! form)
         (state/push-code! (ingest-form form))
         ;; TODO: check only new code
-        (check))
+        (check)
+        (update-suggestions))
       (state/set-error! error))))
 
 (defn push-file [contents]
   (state/reset-state!)
   (let [parsed (->> contents parser/file (map ingest-form))]
     (map state/push-code! parsed)
-    (check)))
+    (check)
+    (update-suggestions)))
 
 (defn set-modal [] (state/set-modal! true))
 (defn add-new-node []

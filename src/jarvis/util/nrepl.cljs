@@ -1,5 +1,6 @@
 (ns jarvis.util.nrepl
   (:require [cljs.nodejs :as nodejs]
+            [cljs.reader :as reader]
             [cljs.core.async :as async :refer [<! >!]]
             [jarvis.util.logger :as util])
   (:require-macros [cljs.core.async.macros :refer [go]]))
@@ -94,3 +95,12 @@
 
 (defn var-defined? [var cb]
   (go (-> var resolve! <! no-doc-err? cb)))
+
+(defn parse-functions [funs]
+  (-> funs reader/read-string))
+
+(defn functions!
+  ([cb]
+   (go (-> `(~'->> ~'*ns* ~'ns-interns ~'keys (~'into [])) eval! <! :val parse-functions cb)))
+  ([namespace cb]
+   (go (-> `(~'->> '~(symbol namespace) ~'ns-publics ~'keys (~'into [])) eval! <! :val parse-functions cb))))
