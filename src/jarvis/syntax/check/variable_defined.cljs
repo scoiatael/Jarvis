@@ -10,8 +10,10 @@
         id (:id info)
         value (walk/value code)]
     ;; (util/log! "Checking (vd)" id value info)
-    (when (and (= type :symbol) (not (scope/var-defined? scope value)))
-      (cb id
-          :variable-not-defined))))
+    (when (= type :symbol)
+      (scope/var-defined? scope value
+                          #(when-not %
+                             (cb id
+                                 :variable-not-defined))))))
 
 (defn check [ch code] (walk/each (partial check-scope ch) code))

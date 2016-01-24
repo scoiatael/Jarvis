@@ -11,8 +11,8 @@
   (contains? keyword-introducing-scope (-> value first walk/value)))
 
 (defprotocol Scope
-  (fn-arity [this fn-name])
-  (var-defined? [this var]))
+  (fn-arity [this fn-name cb])
+  (var-defined? [this var cb]))
 
 (def ^:private ^:const global-vars
   (into keyword-introducing-scope #{'def
@@ -25,8 +25,8 @@
 
 (defrecord EmptyScope []
   Scope
-  (fn-arity [this fn-name] (if (var-defined? this fn-name) :any nil))
-  (var-defined? [this var] (contains? global-vars var)))
+  (fn-arity [this fn-name cb] (var-defined? this fn-name #(cb (if % :any nil))))
+  (var-defined? [this var cb] (cb (contains? global-vars var))))
 
 (defn- bindings-let [this]
   (->> this :bindings (partition 2)))
@@ -39,22 +39,26 @@
 
 (defrecord LetScope [root bindings]
   Scope
-  (fn-arity [this fn-name]
+  (fn-arity [this fn-name cb]
     (let [fn-def (->> this bindings-let (filter #(= fn-name (list->fn-name %))) first last)]
       (if (nil? fn-def)
-        (fn-arity (:root this) fn-name)
-        (-> fn-def walk/info :fn-arity))))
-  (var-defined? [this var]
-    (or (-> (->> this bindings-let (map list->fn-name)) (list-contains? var))
-        (var-defined? (:root this) var))))
+        (fn-arity (:root this) fn-name cb)
+        (-> fn-def walk/info :fn-arity cb))))
+  (var-defined? [this var cb]
+    (if (-> (->> this bindings-let (map list->fn-name)) (list-contains? var))
+      (cb true)
+      (var-defined? (:root this) var cb))))
 
 (defrecord FnScope [root arguments]
   Scope
-  (fn-arity [this fn-name] (if (list-contains? (:arguments this) fn-name)
-                              :any
-                              (fn-arity (:root this) fn-name)))
-  (var-defined? [this var] (or (list-contains? (:arguments this) var)
-                               (var-defined? (:root this) var))))
+  (fn-arity [this fn-name cb]
+    (if (list-contains? (:arguments this) fn-name)
+      (cb :any)
+      (fn-arity (:root this) fn-name cb)))
+  (var-defined? [this var cb]
+    (if (list-contains? (:arguments this) var)
+      (cb true)
+      (var-defined? (:root this) var cb))))
 
 (defn- scope-of-let [root-scope value]
   (LetScope. root-scope (-> value (nth 1) walk/value)))

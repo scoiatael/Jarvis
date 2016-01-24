@@ -21,11 +21,14 @@
     ;; (util/log! "Checking (fa)" id value info)
     (when is-call
       (let [fn-name (-> value first walk/value)
-            fn-arity (scope/fn-arity scope fn-name)
-            arg-num (- (count value) 1)
-            err  (arity-error fn-arity arg-num)]
-        (when-not (nil? err)
-          (cb id err))))))
+            arg-num (- (count value) 1)]
+        (scope/fn-arity
+         scope
+         fn-name
+         (fn [fn-arity]
+           (let [err  (arity-error fn-arity arg-num)]
+             (when-not (nil? err)
+               (cb id err)))))))))
 
 (defn check [cb code] (walk/each (partial check-arity cb) code))
 
