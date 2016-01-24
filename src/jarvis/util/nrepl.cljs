@@ -20,12 +20,17 @@
 
 (defn extract-values [res]
   (let [val (.-value (aget res 0))
-       ex (.-ex (aget res 0))
-       error_pos (aget res 1)
+        ex (.-ex (aget res 0))
+        error_pos (aget res 1)
         err (if (nil? error_pos) nil (.-err error_pos))
         status (.-status (last res))
-        done (if (nil? status) false (= (first status) "done"))]
-    {:val val :ex ex :err err :done? done}))
+        done (if (nil? status) false (= (first status) "done"))
+        out (map #(.-out %) res)]
+    {:val val
+     :ex ex
+     :err err
+     :done? done
+     :out out}))
 
 (defn- handler [ch err res]
   (if-not (nil? err) (util/error! "nREPL error: " err))
@@ -62,3 +67,30 @@
 (defn ns! []
   (util/log! "Requesting current namespace")
   (eval! "*ns*"))
+
+(defn doc! [var]
+  (let [expr `(~'clojure.repl/doc ~(symbol var))]
+    (eval! expr)))
+
+(defn arglists! [var]
+  (let [expr `(~':arglists (~'meta #'~(symbol var)))]
+    (eval! expr)))
+
+(defn resolve! [var]
+  (let [expr `(~'resolve '~(symbol var))]
+    (eval! expr)))
+
+(defn- no-err? [val]
+  (-> val :ex nil?))
+
+(defn- no-doc-err? [val]
+  (-> val :val (= "nil") not))
+
+(defn- parse-doc [val]
+  (if (no-err? val) :any nil))
+
+(defn fn-arity [fn-name cb]
+    (go (-> fn-name arglists! <! parse-doc cb)))
+
+(defn var-defined? [var cb]
+  (go (-> var resolve! <! no-doc-err? cb)))

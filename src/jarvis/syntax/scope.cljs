@@ -1,5 +1,6 @@
 (ns jarvis.syntax.scope
   (:require [jarvis.syntax.walk :as walk]
+            [jarvis.util.nrepl :as nrepl]
             [jarvis.util.logger :as util]))
 
 (def ^:private ^:const keyword-introducing-scope
@@ -22,6 +23,11 @@
 
 (defn- list-contains? [list elem]
   (some #(= % elem) list))
+
+(defrecord RootScope []
+  Scope
+  (fn-arity [this fn-name cb] (nrepl/fn-arity fn-name cb))
+  (var-defined? [this var cb] (nrepl/var-defined? var cb)))
 
 (defrecord EmptyScope []
   Scope
@@ -88,4 +94,4 @@
       (walk/walk #(annotate-scope scope %) identity scoped-code))
     (walk/walk #(annotate-scope root-scope %) identity code)))
 
-(defn parse [code] (annotate-scope (EmptyScope.) code))
+(defn parse [code] (annotate-scope (RootScope.) code))
