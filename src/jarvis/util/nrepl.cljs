@@ -18,12 +18,22 @@
   (reset! *connection* (.connect Client (clj->js connection-options)))
   (.once @*connection* "connect" cb))
 
+(defn extract-values [res]
+  (let [val (.-value (aget res 0))
+       ex (.-ex (aget res 0))
+       error_pos (aget res 1)
+        err (if (nil? error_pos) nil (.-err error_pos))
+        status (.-status (last res))
+        done (if (nil? status) false (= (first status) "done"))]
+    {:val val :ex ex :err err :done? done}))
+
 (defn- handler [ch err res]
   (if-not (nil? err) (util/error! "nREPL error: " err))
   ;; (util/log! "nREPL response: " res)
-  (if-let [val (.-value (aget res 0))]
-    (go (>! ch res))
-    (util/error! "No value received: " res)))
+  (let [val (extract-values res)]
+    (when (:done? val)
+      (util/log! val)
+      (go (>! ch val)))))
 
 (defn- with-connection! [cb]
   (let [connection @*connection*]
