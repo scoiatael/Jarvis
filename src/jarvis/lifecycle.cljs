@@ -48,7 +48,7 @@
 (defn push-file [contents]
   (state/reset-state!)
   (let [parsed (->> contents parser/file (map ingest-form))]
-    (map state/push-code! parsed)
+    (each state/push-code! parsed)
     (check)
     (update-suggestions)))
 
