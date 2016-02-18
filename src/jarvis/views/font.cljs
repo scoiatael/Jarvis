@@ -1,4 +1,4 @@
-(ns jarvis.font)
+(ns jarvis.views.font)
 
 (def code "\"Lucida Console\", Monaco, monospace")
 

@@ -1,9 +1,14 @@
-(ns jarvis.types)
+(ns jarvis.syntax.types
+  (:require [jarvis.syntax.walk :as walk]))
 
 (defn simple-type [value] (let [vty (type value)]
                             (cond
+                              (false? value) :bool
+                              (true? value) :bool
+                              (nil? value) :nil
                               (number? value) :number
                               (string? value) :string
+                              (record? value) :record
                               (= cljs.core/PersistentVector vty) :vector
                               (= cljs.core/PersistentHashMap vty) :map
                               (= cljs.core/PersistentArrayMap vty) :map
@@ -13,20 +18,8 @@
                               (= cljs.core/Keyword vty) :keyword
                               :else vty)))
 
-(defn annotate-type [code] {:value code :type (simple-type code)})
+(defn annotate-type [code]
+  ;; {:pre (satisfies? walk/Info code)}
+  (walk/with-info code {:type (-> code walk/value simple-type)}))
 
-(defn walk
-  [inner outer form]
-  (cond
-    (list? form)   (outer (apply list (map inner form)))
-    (seq? form)    (outer (doall (map inner form)))
-    (record? form) (outer (reduce (fn [r x] (conj r (inner x))) form form))
-    (map? form)    (outer (into (empty form) (map #(into [] (map inner %)) form)))
-    (coll? form)   (outer (into (empty form) (map inner form)))
-    :else          (outer form)))
-
-(defn postwalk
-  [f form]
-  (walk (partial postwalk f) f form))
-
-(defn parse [code] (postwalk annotate-type code))
+(defn parse [code] (walk/postwalk annotate-type code))

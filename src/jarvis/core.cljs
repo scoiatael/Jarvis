@@ -1,40 +1,39 @@
 (ns jarvis.core
-  (:require [cljs.nodejs :as nodejs]))
+  (:require [figwheel.client :as fw :include-macros true]
+            [jarvis.views.app :as app]
+            [jarvis.state.core :as state]
+            [jarvis.util.nrepl :as nrepl]
+            [jarvis.util.ipc :as ipc]
+            [jarvis.util.logger :as util]
+            [jarvis.util.bus :as bus]
+            [reagent.core :as reagent]
+            [goog.style]
+            [cljs.nodejs :as nodejs]))
 
-(def path (nodejs/require "path"))
+(def electron (nodejs/require "electron"))
 
-(def BrowserWindow (nodejs/require "browser-window"))
+(def app (.-app electron))
 
-(def crash-reporter (nodejs/require "crash-reporter"))
+(fw/watch-and-reload
+  :websocket-url   "ws://localhost:3449/figwheel-ws"
+  :jsload-callback 'mount-root)
 
-(def *win* (atom nil))
+(enable-console-print!)
 
-(def app (nodejs/require "app"))
+(defn mount-root []
+  (reagent/render [app/main state/fetch]
+                  (.getElementById js/document "app")))
 
-(defn -main []
-  (.start crash-reporter)
+(defn init! []
+  (goog.style/installStyles (app/styles))
 
-  ;; error listener
-  (.on nodejs/process "error"
-    (fn [err] (.log js/console err)))
+  (.once ipc/renderer "server-started"
+         (fn [srv] (nrepl/connect-to-server
+                   (fn [] (util/log! "Connected to nREPL")))))
 
-  ; window all closed listener
-   (.on app "window-all-closed"
-     (fn [] (if (not= (.-platform nodejs/process) "darwin")
-              (.quit app))))
+  (util/log! "Requesting nREPL start..")
+  (ipc/start-server! {})
 
-  ; ready listener
-   (.on app "ready"
-     (fn []
-       (reset! *win* (BrowserWindow. (clj->js {:width 800 :height 600})))
+  (mount-root))
 
-       ;; when no optimize comment out
-       (.loadUrl @*win* (str "file://" (.resolve path (js* "__dirname") "../index.html")))
-       ;; when no optimize uncomment
-       ;; (.loadUrl @*win* (str "file://" (.resolve path (js* "__dirname") "../../../index.html")))
-
-       (.on @*win* "closed" (fn [] (reset! *win* nil))))))
-
-(nodejs/enable-util-print!)
-
-(set! *main-cli-fn* -main)
+(init!)
