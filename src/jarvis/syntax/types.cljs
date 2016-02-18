@@ -28,6 +28,6 @@
   (walk/postwalk (fn [c]
                    (update-in c [:val]
                               #(if (seqable? %)
-                                 (seq %)
+                                 (flatten (seq %))
                                  %)))
                  code))

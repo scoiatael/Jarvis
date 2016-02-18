@@ -94,24 +94,28 @@
 (defn update-node [nmap node-id update]
   (update-in nmap [:nmap node-id] update))
 
-(defn- map-remove [node-id struct]
-  (let [kv-with-node-id? #{node-id}
-        rest (into {} (filter #(not-any? kv-with-node-id? %) struct))
-        kv (filter #(some kv-with-node-id? %) struct)
-        kv-replaced (map #(if (kv-with-node-id? %) nil %) kv)
-        kv-replaced-empty? (some #(not= nil %) kv-replaced)]
-    (util/log! struct kv kv-replaced)
-    (if kv-replaced-empty? rest (conj rest kv-replaced))))
+(def wrapped-nil (walk/wrap nil))
 
-(defn- generic-remove [node-id struct]
-  (util/log! struct node-id)
-  (if (map? struct)
-    (map-remove node-id struct)
-    (into (empty struct) (filter #(not= (:index %) node-id) struct))))
+(defn- map-remove [node-id struct]
+  (util/log! "map-remove" node-id struct)
+  (let [kv-with-node-id? #(-> % :index #{node-id})]
+    (reduce (fn [res tuple]
+              (if (some kv-with-node-id? tuple)
+                (let [removed (map #(if (kv-with-node-id? %) wrapped-nil %) tuple)]
+                  (if (some #(not= wrapped-nil %) removed)
+                    (conj res removed)
+                    res))
+                (conj res tuple))) '() struct)))
+
+(defn- generic-remove [node-id item struct]
+  (util/log! struct item node-id)
+  (if (= :map (-> item walk/info :type))
+    (flatten (map-remove node-id (partition 2 struct)))
+    (filter #(not= (:index %) node-id) struct)))
 
 (defn remove-node
   ([nmap path node-id]
    (let [inter-index (last path)
          item (-> nmap :nmap (get inter-index))
          index (if (satisfies? walk/Info item) (-> item walk/value :index) inter-index)]
-     (update-in nmap [:nmap index] (partial generic-remove node-id)))))
+     (update-in nmap [:nmap index] (partial generic-remove node-id item)))))

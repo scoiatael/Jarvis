@@ -137,8 +137,13 @@
                          s)]
             c))
 
+(defn push-id [o & args]
+  (conj o
+        {:path (apply conj (:path o) args)}))
+
 (defn- render-map [o k]
-  (let [sorted (sort-by #(-> % first walk/info :id) k)]
+  (let [par (partition 2 k)
+        sorted (sort-by #(-> % first walk/info :id) par)]
     (render-tuple-seq
      o
      (->> sorted
@@ -146,14 +151,6 @@
            #(list (->> % first (render (dissoc-errors o)))
                   (->> % last (render (dissoc-errors o))))))
      (type->color :map))))
-
-(defn- render-record [o k] (render-tuple-seq
-                            o
-                            (->> k
-                                 (map
-                                  #(list (->> % first (render-symbol (dissoc-errors o)))
-                                         (->> % last (render (dissoc-errors o))))))
-                            (type->color :map)))
 
 (defn- render-misc [o k t]
   (util/error! "Unknown value" k " of " t)
@@ -166,7 +163,7 @@
         type (-> info :type)
         errors (-> info :errors)
         id (-> info :id)
-        opts (conj o info {:path (conj (:path o) (:id o))})]
+        opts (conj (push-id o (:id o)) info)]
     (case type
       :bool (render-keyword opts value)
       :nil (render-nil opts value)
@@ -176,6 +173,6 @@
       :number [render-number opts value]
       :string [render-string opts value]
       :list [render-list opts value]
-      ;; :record [render-record opts value]
       :map [render-map opts value]
+      nil [render-nil opts value]
       [render-misc opts value type])))
