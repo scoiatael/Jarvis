@@ -48,7 +48,7 @@
 (defn nodes [nmap] (expand-node (:nmap nmap) (:root nmap)))
 
 (defn fresh []
-  (NodesMap. (StubImpl. 0) {0 []} 1))
+  (NodesMap. (StubImpl. 0) {0 '()} 1))
 
 (defn push-root [nmap form]
   (let [converted (convert nmap form)
@@ -56,7 +56,7 @@
         old-root (:root nmap)]
     (-> converted
         (update-in [:root] (constantly old-root))
-        (update-in [:nmap (:index old-root)] #(conj % new-root)))))
+        (update-in [:nmap (:index old-root)] #(conj (into [] %) new-root)))))
 
 (defn- all-indexes! [nmap list-atom node]
   (when (satisfies? Stub node)
@@ -109,12 +109,13 @@
 
 (defn- generic-remove [node-id item struct]
   (util/log! struct item node-id)
-  (if (= :map (-> item walk/info :type))
+  (if (and (satisfies? walk/Info item) (= :map (-> item walk/info :type)))
     (flatten (map-remove node-id (partition 2 struct)))
     (filter #(not= (:index %) node-id) struct)))
 
 (defn remove-node
   ([nmap path node-id]
+   (util/log! nmap path node-id)
    (let [inter-index (last path)
          item (-> nmap :nmap (get inter-index))
          index (if (satisfies? walk/Info item) (-> item walk/value :index) inter-index)]
