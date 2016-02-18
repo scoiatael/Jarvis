@@ -28,8 +28,12 @@
       [rc/border
        :border (str "1px dashed " "transparent")
        :child [r/render
-               ;; {:on-click #(lifecycle/mark %1)}
-               {:on-hover #(if (= :over %1)
+               {:on-click #(do
+                             (util/log! %1 %2)
+                             (lifecycle/remove-node %2 %1))
+                :path []
+                :id index
+                :on-hover #(if (= :over %1)
                              (lifecycle/mark %2)
                              (lifecycle/unmark %2))}
                item-to-show]]))

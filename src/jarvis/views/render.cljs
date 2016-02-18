@@ -28,11 +28,12 @@
 
 (defn- attrs [o]
   (let [id (:id o)
+        parent-id (:path o)
         on-click (:on-click o #())
         on-hover (:on-hover o #())]
-    {:on-click (partial dont-bubble #(on-click id))
-     :on-mouse-over (partial dont-bubble #(on-hover :over id))
-     :on-mouse-out (partial dont-bubble #(on-hover :out id))}))
+    {:on-click (partial dont-bubble #(on-click id parent-id))
+     :on-mouse-over (partial dont-bubble #(on-hover :over id parent-id))
+     :on-mouse-out (partial dont-bubble #(on-hover :out id parent-id))}))
 
 (def ^:private marked-color
   (-> sol/green color/as-hsl (color/desaturate 75) (color/lighten 50) color/as-hex))
@@ -165,7 +166,7 @@
         type (-> info :type)
         errors (-> info :errors)
         id (-> info :id)
-        opts (conj o info)]
+        opts (conj o info {:path (conj (:path o) (:id o))})]
     (case type
       :bool (render-keyword opts value)
       :nil (render-nil opts value)

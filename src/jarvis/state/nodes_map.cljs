@@ -93,3 +93,25 @@
 
 (defn update-node [nmap node-id update]
   (update-in nmap [:nmap node-id] update))
+
+(defn- map-remove [node-id struct]
+  (let [kv-with-node-id? #{node-id}
+        rest (into {} (filter #(not-any? kv-with-node-id? %) struct))
+        kv (filter #(some kv-with-node-id? %) struct)
+        kv-replaced (map #(if (kv-with-node-id? %) nil %) kv)
+        kv-replaced-empty? (some #(not= nil %) kv-replaced)]
+    (util/log! struct kv kv-replaced)
+    (if kv-replaced-empty? rest (conj rest kv-replaced))))
+
+(defn- generic-remove [node-id struct]
+  (util/log! struct node-id)
+  (if (map? struct)
+    (map-remove node-id struct)
+    (into (empty struct) (filter #(not= (:index %) node-id) struct))))
+
+(defn remove-node
+  ([nmap path node-id]
+   (let [inter-index (last path)
+         item (-> nmap :nmap (get inter-index))
+         index (if (satisfies? walk/Info item) (-> item walk/value :index) inter-index)]
+     (update-in nmap [:nmap index] (partial generic-remove node-id)))))

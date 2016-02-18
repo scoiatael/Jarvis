@@ -85,3 +85,5 @@
   (util/log! "Got write file" fname contents)
   (let [fname tmp-file]
     (file/write fname contents #(nrepl/open! fname))))
+
+(defn remove-node [path node-id] (state/remove-node path node-id))
