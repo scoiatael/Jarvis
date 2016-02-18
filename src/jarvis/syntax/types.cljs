@@ -23,3 +23,11 @@
   (walk/with-info code {:type (-> code walk/value simple-type)}))
 
 (defn parse [code] (walk/postwalk annotate-type code))
+
+(defn sequelize [code]
+  (walk/postwalk (fn [c]
+                   (update-in c [:val]
+                              #(if (seqable? %)
+                                 (seq %)
+                                 %)))
+                 code))
