@@ -7,7 +7,7 @@
 
 ;; Impure
 (defn reset-state! [] (reset! state h/empty-state))
-(defn push-code! [& args] (swap! state #(apply h/push-code (into [%] args))))
+(defn push-code! [code] (swap! state #(h/push-code % code)))
 (defn set-error! [error] (swap! state #(h/set-error % error)))
 (defn set-modal! [modal] (swap! state #(h/set-modal % modal)))
 (defn reset-error! [] (swap! state #(h/reset-error %)))
