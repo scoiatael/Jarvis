@@ -2,7 +2,6 @@
   (:require [re-com.core :refer [v-box box h-box input-textarea gap] :as rc]
             [reagent.core :refer [atom]]
             [garden.core :refer [css]]
-            [garden.color :as color]
             [jarvis.lifecycle :as lifecycle]
             [jarvis.state.helpers :as s]
             [jarvis.syntax.core :as sc]
