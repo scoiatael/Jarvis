@@ -2,6 +2,7 @@
   (:require [re-com.core :refer [v-box box h-box input-textarea gap] :as rc]
             [reagent.core :refer [atom]]
             [garden.core :refer [css]]
+            [garden.color :as color]
             [jarvis.lifecycle :as lifecycle]
             [jarvis.state.helpers :as s]
             [jarvis.syntax.core :as sc]
@@ -24,11 +25,15 @@
    :width "inherit"])
 
 (defn- render-code [item index]
-  (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)
-        rendered (r/render {} item-to-show)]
+  (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)]
       [rc/border
        :border (str "1px dashed " "transparent")
-       :child rendered]))
+       :child [r/render
+               ;; {:on-click #(lifecycle/mark %1)}
+               {:on-hover #(if (= :over %1)
+                             (lifecycle/mark %2)
+                             (lifecycle/unmark %2))}
+               item-to-show]]))
 
 (defn- render-codes [codes]
   [v-box

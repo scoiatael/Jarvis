@@ -4,7 +4,7 @@
 
 (defrecord JarvisState [nodes active error modal suggestions])
 
-(def empty-state (JarvisState. (nmap/fresh) 0 nil nil {}))
+(def empty-state (JarvisState. (nmap/fresh) nil nil nil {}))
 
 (defn nodes [state]
   (-> state :nodes nmap/nodes))
@@ -50,6 +50,12 @@
    [:modal] (constantly e)))
 
 (defn reset-modal [state] (set-modal state nil))
+
+(defn swap-active [state f]
+  (update-fields state
+                 [:active] f))
+
+(defn active [state] (:active state))
 
 (defn push-code [state code]
   (update-fields state

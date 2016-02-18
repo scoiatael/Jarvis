@@ -1,6 +1,7 @@
 (ns jarvis.views.render
   (:require [re-com.core :as rc]
             [re-com.box :refer [flex-flow-style]]
+            [garden.color :as color]
             [jarvis.views.colors.solarized :as sol]
             [jarvis.syntax.walk :as walk]
             [jarvis.views.font :as font]
@@ -18,21 +19,40 @@
        :md-icon-name "zmdi-alert-triangle"]
       [:div])))
 
+(defn- dont-bubble [f ev]
+  (do
+    (if (nil? (.-stopPropagation ev))
+      (set! (.-cancelBubble ev) true)
+      (.stopPropagation ev))
+    (f)))
+
+(defn- attrs [o]
+  (let [id (:id o)
+        on-click (:on-click o #())
+        on-hover (:on-hover o #())]
+    {:on-click (partial dont-bubble #(on-click id))
+     :on-mouse-over (partial dont-bubble #(on-hover :over id))
+     :on-mouse-out (partial dont-bubble #(on-hover :out id))}))
+
+(defn- style [o color]
+  (let [marked (:marked o)
+        base {:color color
+              :text-align "center"
+              :transition "0.5s"
+              :font-family font/code}]
+    (into base (if marked {:background-color (-> sol/green color/as-hsl (color/desaturate 75) (color/lighten 50) color/as-hex)} {}))))
+
 (defn- code-box [o code color]
-  (let [on-click (:on-click o)
-        on-hover (:on-hover o)
-        errors (:errors o)]
+  (let [errors (:errors o)]
     [rc/box
-     :attr {:on-click on-click
-            :on-mouse-over on-hover}
+     :attr (attrs o)
      :size "0 1 auto"
-     :style {:border (str "solid 3px " color)
-             :border-radius "2px"
-             :height "100%"
-             :padding "5px"
-             :text-align "center"
-             :font-family font/code
-             :margin "0.5em"}
+     :style (into (style o color)
+                  {:border (str "solid 3px " color)
+                   :border-radius "2px"
+                   :height "100%"
+                   :padding "5px"
+                   :margin "0.5em"})
      :child  [rc/v-box
               :size "0 1 auto"
               :align :center
@@ -45,30 +65,23 @@
    :tooltip (str errors)])
 
 (defn- code-text [o code color]
-  (let [on-click (:on-click o)
-        on-hover (:on-hover o)
-        errors (:errors o)]
+  (let [errors (:errors o)]
     [rc/box
-     :attr {:on-click on-click
-            :on-mouse-over on-hover}
+     :attr (attrs o)
      :align :center
-     :style {:color color
-             :text-align "center"
-             :font-family font/code}
+     :style (style o color)
      :child  (if (empty? errors) code [error-text errors code])]))
 
 (defn- dissoc-errors [o] (dissoc o :errors))
 
-(def ^:private type->color {
-                            :keyword sol/yellow
+(def ^:private type->color {:keyword sol/yellow
                             :symbol sol/base01
                             :number sol/green
                             :string sol/magenta
                             :list sol/violet
                             :map sol/blue
                             :vector sol/cyan
-                            :misc sol/red
-                            })
+                            :misc sol/red})
 
 ;; Primitives
 (defn- render-nil [o _] (code-text o "nil" (type->color :keyword)))
@@ -142,9 +155,11 @@
 (defn render [o code]
   ;; pre satisfies? Info code
   (let [value (walk/value code)
-        type (-> code walk/info :type)
-        errors (-> code walk/info :errors)
-        opts (update-in o [:errors] #(into % errors))]
+        info (-> code walk/info)
+        type (-> info :type)
+        errors (-> info :errors)
+        id (-> info :id)
+        opts (conj o info)]
     (case type
       :bool (render-keyword opts value)
       :nil (render-nil opts value)

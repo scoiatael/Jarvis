@@ -22,6 +22,16 @@
 (defn- check-code [code]
   (t/check add-error code))
 
+(defn unmark [id]
+  (when-not (nil? id)
+    (state/swap-active! #(if (= id %) nil %))
+    (state/update-node id #(walk/with-info % {:marked false}))))
+
+(defn mark [id]
+  (unmark (state/active))
+  (state/swap-active! (constantly id))
+  (state/update-node id #(walk/with-info % {:marked true})))
+
 (defn each [f args]
   (loop [s (seq args)]
     (when-not (empty? s)
