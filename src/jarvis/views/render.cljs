@@ -34,13 +34,16 @@
      :on-mouse-over (partial dont-bubble #(on-hover :over id))
      :on-mouse-out (partial dont-bubble #(on-hover :out id))}))
 
+(def ^:private marked-color
+  (-> sol/green color/as-hsl (color/desaturate 75) (color/lighten 50) color/as-hex))
+
 (defn- style [o color]
   (let [marked (:marked o)
         base {:color color
               :text-align "center"
               :transition "0.5s"
               :font-family font/code}]
-    (into base (if marked {:background-color (-> sol/green color/as-hsl (color/desaturate 75) (color/lighten 50) color/as-hex)} {}))))
+    (into base (if marked {:background-color marked-color} {}))))
 
 (defn- code-box [o code color]
   (let [errors (:errors o)]
@@ -120,25 +123,28 @@
                :disabled? true]
               s]])
 
-(defn- render-tuple-seq [o s c] (code-box o
-                                          [rc/h-box
-                                           :size "0 1 auto"
-                                           :style (flex-flow-style "row wrap")
-                                           :gap sep
-                                           :children  (map
-                                                       #(render-tuple (dissoc-errors o)
-                                                                      (->> % first)
-                                                                      (->> % last))
-                                                       s)]
-                                          c))
+(defn- render-tuple-seq [o s c]
+  (code-box o
+            [rc/h-box
+             :size "0 1 auto"
+             :style (flex-flow-style "row wrap")
+             :gap sep
+             :children  (map
+                         #(render-tuple (dissoc-errors o)
+                                        (->> % first)
+                                        (->> % last))
+                         s)]
+            c))
 
-(defn- render-map [o k] (render-tuple-seq
-                         o
-                         (->> k
-                              (map
-                               #(list (->> % first (render (dissoc-errors o)))
-                                      (->> % last (render (dissoc-errors o))))))
-                         (type->color :map)))
+(defn- render-map [o k]
+  (let [sorted (sort-by #(-> % first walk/info :id) k)]
+    (render-tuple-seq
+     o
+     (->> sorted
+          (map
+           #(list (->> % first (render (dissoc-errors o)))
+                  (->> % last (render (dissoc-errors o))))))
+     (type->color :map))))
 
 (defn- render-record [o k] (render-tuple-seq
                             o
