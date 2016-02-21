@@ -2,9 +2,9 @@
   (:require [jarvis.util.logger :as util]
             [jarvis.state.nodes-map :as nmap]))
 
-(defrecord JarvisState [nodes active error modal suggestions])
+(defrecord JarvisState [nodes active error modal suggestions pasting])
 
-(def empty-state (JarvisState. (nmap/fresh) nil nil nil {}))
+(def empty-state (JarvisState. (nmap/fresh) nil nil nil {} nil))
 
 (defn nodes [state]
   (-> state :nodes nmap/nodes))
@@ -36,26 +36,8 @@
         fun (last tuple)]
     (update-in struct field fun)))
 
-(defn- update-fields [state field fun & args]
+(defn update-fields [state field fun & args]
   (reduce update-field state (conj (partition 2 args) [field fun])))
-
-(defn set-error [state e]
-  (update-fields state
-   [:error] (constantly e)))
-
-(defn reset-error [state] (set-error state nil))
-
-(defn set-modal [state e]
-  (update-fields state
-   [:modal] (constantly e)))
-
-(defn reset-modal [state] (set-modal state nil))
-
-(defn swap-active [state f]
-  (update-fields state
-                 [:active] f))
-
-(defn active [state] (:active state))
 
 (defn push-code [state code]
   (update-fields state

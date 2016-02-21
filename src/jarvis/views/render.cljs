@@ -38,6 +38,14 @@
 (def ^:private marked-color
   (-> sol/green color/as-hsl (color/desaturate 75) (color/lighten 50) color/as-hex))
 
+(defn- paster [o pos]
+  [rc/md-circle-icon-button
+   :attr (attrs (into o {:id pos}))
+   :md-icon-name "zmdi-format-color-fill"
+   :size (or (:size o) :regular)
+   :style {:background-color marked-color
+           :color "black"}])
+
 (defn- style [o color]
   (let [marked (:marked o)
         base {:color color
@@ -101,15 +109,25 @@
 
 (def ^:private sep "0.5em")
 
+(defn- mapcat-indexed [f coll]
+  (apply concat (map-indexed f coll)))
+
+(defn- interpose-paster [paster-component children]
+  (let [children-vec (into [] children)]
+    (mapcat-indexed (fn [index item] [(paster-component index) item]) children-vec)))
+
 ;; Recursive types
 (declare render)
 (defn- render-seq [o k c]
-  (code-box o [rc/h-box
-               :size "0 1 auto"
-               :align :center
-               :style (flex-flow-style "row wrap")
-               :gap sep
-               :children (->> k (map (partial render (dissoc-errors o))))] c))
+  (let [children (->> k (map (partial render (dissoc-errors o))))
+        render-paster (:paster o)
+        paster-component (fn [p] [paster {} p])]
+    (code-box o [rc/h-box
+                 :size "0 1 auto"
+                 :align :center
+                 :style (flex-flow-style "row wrap")
+                 :gap sep
+                 :children (if render-paster (interpose-paster paster-component children) children)] c)))
 
 (defn- render-vector [o k] (render-seq o k (type->color :vector)))
 
@@ -125,17 +143,17 @@
               s]])
 
 (defn- render-tuple-seq [o s c]
-  (code-box o
-            [rc/h-box
-             :size "0 1 auto"
-             :style (flex-flow-style "row wrap")
-             :gap sep
-             :children  (map
-                         #(render-tuple (dissoc-errors o)
-                                        (->> % first)
-                                        (->> % last))
-                         s)]
-            c))
+  (let [children (map #(render-tuple (dissoc-errors o)
+                                     (->> % first)
+                                     (->> % last))
+                      s)]
+    (code-box o
+              [rc/h-box
+               :size "0 1 auto"
+               :style (flex-flow-style "row wrap")
+               :gap sep
+               :children  children]
+              c)))
 
 (defn push-id [o & args]
   (conj o
@@ -143,13 +161,16 @@
 
 (defn- render-map [o k]
   (let [par (partition 2 k)
-        sorted (sort-by #(-> % first walk/info :id) par)]
+        sorted (sort-by #(-> % first walk/info :id) par)
+        children (->> sorted
+                      (map
+                       #(list (->> % first (render (dissoc-errors o)))
+                              (->> % last (render (dissoc-errors o))))))
+        render-paster (:paster o)
+        paster-component (fn [p] [paster {:size :smaller} p])]
     (render-tuple-seq
      o
-     (->> sorted
-          (map
-           #(list (->> % first (render (dissoc-errors o)))
-                  (->> % last (render (dissoc-errors o))))))
+     (if render-paster  (conj (into [] children) [(paster-component 0) (paster-component 1)]) children)
      (type->color :map))))
 
 (defn- render-misc [o k t]
