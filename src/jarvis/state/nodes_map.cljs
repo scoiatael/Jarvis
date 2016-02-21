@@ -97,7 +97,6 @@
 (def wrapped-nil (walk/wrap nil))
 
 (defn- map-remove [node-id struct]
-  (util/log! "map-remove" node-id struct)
   (let [kv-with-node-id? #(-> % :index #{node-id})]
     (reduce (fn [res tuple]
               (if (some kv-with-node-id? tuple)
@@ -107,16 +106,42 @@
                     res))
                 (conj res tuple))) '() struct)))
 
+(defn- is-map? [item]
+  (and (satisfies? walk/Info item) (= :map (-> item walk/info :type))))
+
 (defn- generic-remove [node-id item struct]
-  (util/log! struct item node-id)
-  (if (and (satisfies? walk/Info item) (= :map (-> item walk/info :type)))
+  (if (is-map? item)
     (flatten (map-remove node-id (partition 2 struct)))
     (filter #(not= (:index %) node-id) struct)))
 
-(defn remove-node
-  ([nmap path node-id]
-   (util/log! nmap path node-id)
-   (let [inter-index (last path)
-         item (-> nmap :nmap (get inter-index))
-         index (if (satisfies? walk/Info item) (-> item walk/value :index) inter-index)]
-     (update-in nmap [:nmap index] (partial generic-remove node-id item)))))
+(defn- get-real-node [nmap path]
+  (let [inter-index (last path)
+        item (-> nmap :nmap (get inter-index))
+        index (if (satisfies? walk/Info item) (-> item walk/value :index) inter-index)]
+    [index item]))
+
+(defn remove-node [nmap path node-id]
+   (let [[index item] (get-real-node nmap path)]
+     (update-in nmap [:nmap index] (partial generic-remove node-id item))))
+
+(defn- seq-insert [offset node list]
+  (let [[before after] (split-at offset list)]
+    (concat before [node] after)))
+
+(defn- make-tuple [offset node]
+  (assert (#{0 1} offset))
+  (case offset
+    0 [node wrapped-nil]
+    1 [wrapped-nil node]))
+
+(defn- map-insert [offset node list]
+  (concat list (make-tuple offset node)))
+
+(defn- generic-insert [node-id item node struct]
+  (if (is-map? item)
+    (map-insert node-id node struct)
+    (seq-insert node-id node struct)))
+
+(defn paste-node [nmap path node-id node]
+  (let [[index item] (get-real-node nmap path)]
+    (update-in nmap [:nmap index] (partial generic-insert node-id item (StubImpl. node)))))

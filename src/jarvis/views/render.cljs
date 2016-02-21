@@ -54,6 +54,10 @@
               :font-family font/code}]
     (into base (if marked {:background-color marked-color} {}))))
 
+(defn push-id [o & args]
+  (conj o
+        {:path (apply conj (:path o) args)}))
+
 (defn- code-box [o code color]
   (let [errors (:errors o)]
     [rc/box
@@ -121,7 +125,7 @@
 (defn- render-seq [o k c]
   (let [children (->> k (map (partial render (dissoc-errors o))))
         render-paster (:paster o)
-        paster-component (fn [p] [paster o p])]
+        paster-component (fn [p] [paster (push-id o (:id o)) p])]
     (code-box o [rc/h-box
                  :size "0 1 auto"
                  :align :center
@@ -155,10 +159,6 @@
                :children  children]
               c)))
 
-(defn push-id [o & args]
-  (conj o
-        {:path (apply conj (:path o) args)}))
-
 (defn- render-map [o k]
   (let [par (partition 2 k)
         sorted (sort-by #(-> % first walk/info :id) par)
@@ -167,7 +167,7 @@
                        #(list (->> % first (render (dissoc-errors o)))
                               (->> % last (render (dissoc-errors o))))))
         render-paster (:paster o)
-        paster-component (fn [p] [paster (into o {:size :smaller}) p])]
+        paster-component (fn [p] [paster (into (push-id o (:id o)) {:size :smaller}) p])]
     (render-tuple-seq
      o
      (if render-paster  (conj (into [] children) [(paster-component 0) (paster-component 1)]) children)

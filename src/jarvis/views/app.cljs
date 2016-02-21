@@ -30,9 +30,7 @@
        :child [r/render
                {:on-click #(do
                              (util/log! %1 %2)
-                             (lifecycle/clicked!)
-                             ;; (lifecycle/remove-node %2 %1)
-                             )
+                             (if pasting? (lifecycle/paste-node %2 %1) (lifecycle/cut-node %2 %1)))
                 :path []
                 :paster pasting?
                 :id 0 ;; nodes_map root... ugly constant.

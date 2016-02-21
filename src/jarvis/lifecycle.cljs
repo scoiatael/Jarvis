@@ -86,6 +86,12 @@
   (let [fname tmp-file]
     (file/write fname contents #(nrepl/open! fname))))
 
-(defn remove-node [path node-id] (state/remove-node path node-id))
+(defn- toggle-pasting [& args] (state/swap-pasting! #(or (first args) (not %))))
 
-(defn clicked! [] (state/swap-pasting! #(not %)))
+(defn paste-node [path node-id]
+  (state/paste-node path node-id (state/pasting))
+  (toggle-pasting))
+
+(defn cut-node [path node-id]
+  (state/remove-node path node-id)
+  (toggle-pasting node-id))
