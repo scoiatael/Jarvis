@@ -40,7 +40,7 @@
 
 (defn- paster [o pos]
   [rc/md-circle-icon-button
-   :attr (attrs (into o {:id pos}))
+   :attr (attrs (dissoc (into o {:id pos}) :on-hover))
    :md-icon-name "zmdi-format-color-fill"
    :size (or (:size o) :regular)
    :style {:background-color marked-color
@@ -114,14 +114,14 @@
 
 (defn- interpose-paster [paster-component children]
   (let [children-vec (into [] children)]
-    (mapcat-indexed (fn [index item] [(paster-component index) item]) children-vec)))
+    (mapcat-indexed (fn [index item] [(paster-component index) item]) (conj children-vec nil))))
 
 ;; Recursive types
 (declare render)
 (defn- render-seq [o k c]
   (let [children (->> k (map (partial render (dissoc-errors o))))
         render-paster (:paster o)
-        paster-component (fn [p] [paster {} p])]
+        paster-component (fn [p] [paster o p])]
     (code-box o [rc/h-box
                  :size "0 1 auto"
                  :align :center
@@ -167,7 +167,7 @@
                        #(list (->> % first (render (dissoc-errors o)))
                               (->> % last (render (dissoc-errors o))))))
         render-paster (:paster o)
-        paster-component (fn [p] [paster {:size :smaller} p])]
+        paster-component (fn [p] [paster (into o {:size :smaller}) p])]
     (render-tuple-seq
      o
      (if render-paster  (conj (into [] children) [(paster-component 0) (paster-component 1)]) children)

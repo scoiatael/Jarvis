@@ -23,26 +23,29 @@
    :model ""
    :width "inherit"])
 
-(defn- render-code [item index]
+(defn- render-code [pasting? item index]
   (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)]
       [rc/border
        :border (str "1px dashed " "transparent")
        :child [r/render
                {:on-click #(do
                              (util/log! %1 %2)
-                             (lifecycle/remove-node %2 %1))
+                             (lifecycle/clicked!)
+                             ;; (lifecycle/remove-node %2 %1)
+                             )
                 :path []
+                :paster pasting?
                 :id 0 ;; nodes_map root... ugly constant.
                 :on-hover #(if (= :over %1)
                              (lifecycle/mark %2)
                              (lifecycle/unmark %2))}
                item-to-show]]))
 
-(defn- render-codes [codes]
+(defn- render-codes [pasting? codes]
   [v-box
    :align :start
    :style {:max-width "100%"}
-   :children (map-indexed (fn [index item] [render-code item index]) codes)])
+   :children (map-indexed (fn [index item] [render-code pasting? item index]) codes)])
 
 (defn- render-error [error]
   [rc/modal-panel :child (.-message error)
@@ -81,7 +84,8 @@
    :children (map (fn [item] [render-namespace (first item) (last item)]) suggestions)])
 
 (defn- main-component [state]
-  (let [codes (s/nodes state)
+  (let [pasting? (s/pasting? state)
+        codes (s/nodes state)
         suggestions (s/suggestions state)]
     [h-box
      :style { :height "100%" }
@@ -89,7 +93,7 @@
 
                 [box
                  :size "1"
-                 :child [render-codes codes]]
+                 :child [render-codes pasting? codes]]
 
                 [render-circle-controllers codes]]]))
 

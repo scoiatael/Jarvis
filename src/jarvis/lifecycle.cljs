@@ -87,3 +87,5 @@
     (file/write fname contents #(nrepl/open! fname))))
 
 (defn remove-node [path node-id] (state/remove-node path node-id))
+
+(defn clicked! [] (state/swap-pasting! #(not %)))

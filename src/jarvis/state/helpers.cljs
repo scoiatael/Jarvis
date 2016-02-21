@@ -57,3 +57,5 @@
 
 (defn remove-node [state path node-id]
   (update-in state [:nodes] #(nmap/remove-node % path node-id)))
+
+(defn pasting? [state] (:pasting state))

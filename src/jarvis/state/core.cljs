@@ -26,10 +26,10 @@
 (defn remove-node [path node-id] (swap! state #(h/remove-node % path node-id)))
 
 ;; Pure
-(defn nodes-length [] (h/nodes-length @state))
-(defn code [& args] (apply h/code (into [@state] args)))
-(defn nodes [] (h/nodes @state))
-(defn active [] (:active state))
-(defn pasting [] (:pasting state))
-(defn pasting? [] (not (nil? (pasting))))
 (defn fetch [] @state)
+(defn nodes-length [] (h/nodes-length (fetch)))
+(defn code [& args] (apply h/code (into [(fetch)] args)))
+(defn nodes [] (h/nodes (fetch)))
+(defn active [] (:active (fetch)))
+(defn pasting [] (:pasting (fetch)))
+(defn pasting? [] (h/pasting? (fetch)))
