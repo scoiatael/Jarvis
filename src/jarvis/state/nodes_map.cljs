@@ -4,13 +4,20 @@
             [jarvis.util.logger :as util]))
 
 (defprotocol Stub
-  (expand [this nmap]))
+  (expand [this nmap])
+  (empty-stub? [this]))
 
 (defrecord NodesMap [root nmap index])
 
 (defrecord StubImpl [index]
   Stub
-  (expand [this nmap] (-> this :index nmap)))
+  (expand [this nmap] (-> this :index nmap))
+  (empty-stub? [this] false))
+
+(defrecord NilImpl [index]
+  Stub
+  (expand [this nmap] (-> this :index nmap))
+  (empty-stub? [this] true))
 
 (defn- with-id-info [node id]
   (if (satisfies? walk/Info node)
@@ -31,7 +38,7 @@
         bind-this (fn [new-form]
                     (swap! map-atom #(assoc % this-index new-form))
                     (StubImpl. this-index))]
-    (swap! index-atom #(+ 1 %))
+    (swap! index-atom inc)
     (walk/walk (partial flatten! index-atom map-atom) bind-this form)
     (StubImpl. this-index)))
 
@@ -94,14 +101,12 @@
 (defn update-node [nmap node-id update]
   (update-in nmap [:nmap node-id] update))
 
-(def wrapped-nil (walk/wrap nil))
-
-(defn- map-remove [node-id struct]
+(defn- map-remove [node-id struct pad]
   (let [kv-with-node-id? #(-> % :index #{node-id})]
     (reduce (fn [res tuple]
               (if (some kv-with-node-id? tuple)
-                (let [removed (map #(if (kv-with-node-id? %) wrapped-nil %) tuple)]
-                  (if (some #(not= wrapped-nil %) removed)
+                (let [removed (map #(if (kv-with-node-id? %) pad %) tuple)]
+                  (if (some #(not (empty-stub? %)) removed)
                     (conj res removed)
                     res))
                 (conj res tuple))) '() struct)))
@@ -109,9 +114,9 @@
 (defn- is-map? [item]
   (and (satisfies? walk/Info item) (= :map (-> item walk/info :type))))
 
-(defn- generic-remove [node-id item struct]
+(defn- generic-remove [node-id item pad struct]
   (if (is-map? item)
-    (flatten (map-remove node-id (partition 2 struct)))
+    (flatten (map-remove node-id (partition 2 struct) pad))
     (filter #(not= (:index %) node-id) struct)))
 
 (defn- get-real-node [nmap path]
@@ -120,28 +125,50 @@
         index (if (satisfies? walk/Info item) (-> item walk/value :index) inter-index)]
     [index item]))
 
+(def wrapped-nil (walk/wrap nil))
+
+(defn- generate-new-nil [nmap]
+  (let [this-index (:index nmap)]
+    [(NilImpl. this-index)
+     (-> nmap
+         (update-in [:index] inc)
+         (update-in [:nmap] #(assoc % this-index wrapped-nil)))]))
+
 (defn remove-node [nmap path node-id]
-   (let [[index item] (get-real-node nmap path)]
-     (update-in nmap [:nmap index] (partial generic-remove node-id item))))
+  (let [[index item] (get-real-node nmap path)
+        [pad updated-nmap] (generate-new-nil nmap)]
+    (assert (not= nil (expand pad (:nmap updated-nmap))))
+    (update-in updated-nmap [:nmap index] (partial generic-remove node-id item pad))))
 
-(defn- seq-insert [offset node list]
-  (let [[before after] (split-at offset list)]
-    (concat before [node] after)))
+(defn replace-node [pos node list]
+  (map #(if (= % pos) node %) list))
 
-(defn- make-tuple [offset node]
+(defn- seq-insert [pos node list]
+  (if (map? pos)
+    (let [offset (:after pos)]
+      (let [[before after] (split-at offset list)]
+        (concat before [node] after)))
+    (replace-node pos node list)))
+
+(defn- make-tuple [offset node pad]
   (assert (#{0 1} offset))
   (case offset
-    0 [node wrapped-nil]
-    1 [wrapped-nil node]))
+    0 [node pad]
+    1 [pad node]))
 
-(defn- map-insert [offset node list]
-  (concat list (make-tuple offset node)))
+(defn- map-insert [pos node list pad]
+  (if (map? pos)
+    (let [offset (:after pos)]
+      (concat list (make-tuple offset node pad)))
+    (replace-node pos node list)))
 
-(defn- generic-insert [node-id item node struct]
+(defn- generic-insert [node-id item node pad struct]
   (if (is-map? item)
-    (map-insert node-id node struct)
+    (map-insert node-id node struct pad)
     (seq-insert node-id node struct)))
 
 (defn paste-node [nmap path node-id node]
-  (let [[index item] (get-real-node nmap path)]
-    (update-in nmap [:nmap index] (partial generic-insert node-id item (StubImpl. node)))))
+  (let [[index item] (get-real-node nmap path)
+    [pad updated-nmap] (generate-new-nil nmap)]
+    (assert (not= nil (expand pad (:nmap updated-nmap))))
+    (update-in updated-nmap [:nmap index] (partial generic-insert node-id item (StubImpl. node) pad))))

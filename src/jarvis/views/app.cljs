@@ -29,11 +29,11 @@
        :border (str "1px dashed " "transparent")
        :child [r/render
                {:on-click #(do
-                             (util/log! %1 %2)
+                             ;; (util/log! %1 %2)
                              (if pasting? (lifecycle/paste-node %2 %1) (lifecycle/cut-node %2 %1)))
                 :path []
                 :paster pasting?
-                :id 0 ;; nodes_map root... ugly constant.
+                :id 0 ;; FIXME: nodes_map root... ugly constant.
                 :on-hover #(if (= :over %1)
                              (lifecycle/mark %2)
                              (lifecycle/unmark %2))}

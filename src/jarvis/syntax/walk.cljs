@@ -49,3 +49,5 @@
   (walk normalize identity (normalize-record form)))
 
 (defn each [f form] (postwalk (fn [in] (f in) in) form))
+
+(defn is-info? [x] (satisfies? walk/Info x))

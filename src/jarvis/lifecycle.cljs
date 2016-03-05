@@ -89,9 +89,11 @@
 (defn- toggle-pasting [& args] (state/swap-pasting! #(or (first args) (not %))))
 
 (defn paste-node [path node-id]
+  (util/log! "Paste" node-id "into" path)
   (state/paste-node path node-id (state/pasting))
   (toggle-pasting))
 
 (defn cut-node [path node-id]
+  (util/log! "Cut" node-id "from" path)
   (state/remove-node path node-id)
   (toggle-pasting node-id))

@@ -40,7 +40,7 @@
 
 (defn- paster [o pos]
   [rc/md-circle-icon-button
-   :attr (attrs (dissoc (into o {:id pos}) :on-hover))
+   :attr (attrs (dissoc (into o {:id {:after pos}}) :on-hover))
    :md-icon-name "zmdi-format-color-fill"
    :size (or (:size o) :regular)
    :style {:background-color marked-color
@@ -178,12 +178,12 @@
   (code-box o (str k) (type->color :misc)))
 
 (defn render [o code]
-  ;; pre satisfies? Info code
+  {:pre (walk/is-info? code)}
   (let [value (walk/value code)
-        info (-> code walk/info)
-        type (-> info :type)
-        errors (-> info :errors)
-        id (-> info :id)
+        info (walk/info code)
+        type (:type info)
+        errors (info :errors)
+        id (:id info)
         opts (conj (push-id o (:id o)) info)]
     (case type
       :bool (render-keyword opts value)
