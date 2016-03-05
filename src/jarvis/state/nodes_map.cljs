@@ -141,7 +141,7 @@
     (update-in updated-nmap [:nmap index] (partial generic-remove node-id item pad))))
 
 (defn replace-node [pos node list]
-  (map #(if (= % pos) node %) list))
+  (map #(if (= (:index %) pos) node %) list))
 
 (defn- seq-insert [pos node list]
   (if (map? pos)
