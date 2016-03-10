@@ -10,6 +10,7 @@
 ;; Impure
 (defn reset-state! [] (reset! state h/empty-state))
 (defn push-code! [code] (swap! state #(h/push-code % code)))
+(defn insert-code-at [path code] (swap! state #(h/push-code % path code)))
 (defn set-error! [e] (modify :error (constantly e)))
 (defn reset-error! [] (set-error! nil))
 

@@ -88,12 +88,21 @@
 
 (defn- toggle-pasting [& args] (state/swap-pasting! #(or (first args) (not %))))
 
+(defn- recheck [node]
+  (let [to-check node
+        code-to-check (-> to-check state/code t/strip)]
+    ;; (util/log! "Need to check" to-check code-to-check)
+    (state/insert-code-at to-check (ingest-form code-to-check))
+    (check)))
+
 (defn paste-node [path node-id]
   (util/log! "Paste" node-id "into" path)
   (state/paste-node path node-id (state/pasting))
-  (toggle-pasting))
+  (toggle-pasting)
+  (recheck (nth path 1)))
 
 (defn cut-node [path node-id]
   (util/log! "Cut" node-id "from" path)
   (state/remove-node path node-id)
+  (recheck (nth path 1))
   (toggle-pasting node-id))

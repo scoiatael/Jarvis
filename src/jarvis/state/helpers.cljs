@@ -24,12 +24,8 @@
 (defn valid-index? [state index]
   (and (number? index) (< index (nodes-length state)) (< -1 index)))
 
-(defn code
-  ([state index]
-   (let [nodes (nodes state)]
-     (if (valid-index? state index)
-       (nth nodes index)
-       nil))))
+(defn code [state index]
+  (nmap/expand-node-index (:nodes state) index))
 
 (defn- update-field [struct tuple]
   (let [field (first tuple)
@@ -39,9 +35,13 @@
 (defn update-fields [state field fun & args]
   (reduce update-field state (conj (partition 2 args) [field fun])))
 
-(defn push-code [state code]
-  (update-fields state
-   [:nodes] #(nmap/push-root % code)))
+(defn push-code
+  ([state code]
+   (update-fields state
+                  [:nodes] #(nmap/push-root % code)))
+  ([state index code]
+   (update-fields state
+                  [:nodes] #(nmap/swap-at-root % index code))))
 
 (defn nodes-empty? [state]
   (< (nodes-length state) 1))

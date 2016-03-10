@@ -74,7 +74,7 @@
     (eval! expr)))
 
 (defn arglists! [var]
-  (let [expr `(~':arglists (~'meta #'~(symbol var)))]
+  (let [expr `(~':arglists (~'meta #'~(-> var str symbol)))]
     (eval! expr)))
 
 (defn resolve! [var]

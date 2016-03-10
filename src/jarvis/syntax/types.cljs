@@ -1,5 +1,6 @@
 (ns jarvis.syntax.types
-  (:require [jarvis.syntax.walk :as walk]))
+  (:require [jarvis.syntax.walk :as walk]
+            [jarvis.util.logger :as util]))
 
 (defn simple-type [value] (let [vty (type value)]
                             (cond
@@ -14,6 +15,7 @@
                               (= cljs.core/PersistentArrayMap vty) :map
                               (= cljs.core/List vty) :list
                               (= cljs.core/EmptyList vty) :list
+                              (= cljs.core/LazySeq vty) :list
                               (= cljs.core/Symbol vty) :symbol
                               (= cljs.core/Keyword vty) :keyword
                               :else vty)))
@@ -31,3 +33,17 @@
                                  (flatten (seq %))
                                  %)))
                  code))
+
+(defn unsequelize [code]
+  {:pre (walk/is-info? code)}
+  (let [value (walk/value code)
+        info (walk/info code)
+        type (:type info)]
+    (update-in code
+               [:val] #(case type
+                          :map (apply hash-map %)
+                          :vector (into [] %)
+                          %))))
+
+(defn strip [form]
+  (walk/postwalk #(-> % unsequelize walk/value) form))

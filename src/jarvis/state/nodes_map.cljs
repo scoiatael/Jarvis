@@ -52,6 +52,7 @@
         (update-in [:index] (constantly @index-atom))
         (update-in [:nmap] (constantly @map-atom)))))
 
+(defn expand-node-index [nmap node-index] (expand-node (:nmap nmap) (StubImpl. node-index)))
 (defn nodes [nmap] (expand-node (:nmap nmap) (:root nmap)))
 
 (defn fresh []
@@ -64,6 +65,18 @@
     (-> converted
         (update-in [:root] (constantly old-root))
         (update-in [:nmap (:index old-root)] #(conj (into [] %) new-root)))))
+
+(defn replace-node [pos node list]
+  (map #(if (= (:index %) pos) node %) list))
+
+(defn swap-at-root [nmap index form]
+  (util/log! form)
+  (let [converted (convert nmap form)
+        new-root (:root converted)
+        old-root (:root nmap)]
+    (-> converted
+        (update-in [:root] (constantly old-root))
+        (update-in [:nmap (:index old-root)] #(replace-node index new-root (into [] %))))))
 
 (defn- all-indexes! [nmap list-atom node]
   (when (satisfies? Stub node)
@@ -139,9 +152,6 @@
         [pad updated-nmap] (generate-new-nil nmap)]
     (assert (not= nil (expand pad (:nmap updated-nmap))))
     (update-in updated-nmap [:nmap index] (partial generic-remove node-id item pad))))
-
-(defn replace-node [pos node list]
-  (map #(if (= (:index %) pos) node %) list))
 
 (defn- seq-insert [pos node list]
   (if (map? pos)

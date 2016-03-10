@@ -1,11 +1,11 @@
 (ns jarvis.syntax.pretty-print
   (:require
    [cljs.pprint]
-   [jarvis.syntax.walk :as walk]))
+   [jarvis.syntax.core :as t]))
 
 (defn- pretty-print [struct] (with-out-str (cljs.pprint/pprint struct)))
 
 (defn pp [struct] (-> struct
-                      walk/strip
+                      t/strip
                       pretty-print))
 
