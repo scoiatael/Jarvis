@@ -38,7 +38,7 @@
   ;; (util/log! "nREPL response: " res)
   (let [val (extract-values res)]
     (when (:done? val)
-      (util/log! val)
+      ;; (util/log! "Done: " val)
       (go (>! ch val)))))
 
 (defn- with-connection! [cb]
@@ -58,7 +58,7 @@
                    expr
                    (str expr))]
     (with-connection! (fn [connection]
-                        (util/log! "Eval: " str-expr)
+                        ;; (util/log! "Eval: " str-expr)
                         (eval connection str-expr)))))
 
 (defn open! [file]

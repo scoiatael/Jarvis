@@ -70,7 +70,6 @@
   (map #(if (= (:index %) pos) node %) list))
 
 (defn swap-at-root [nmap index form]
-  (util/log! form)
   (let [converted (convert nmap form)
         new-root (:root converted)
         old-root (:root nmap)]
@@ -127,9 +126,13 @@
 (defn- is-map? [item]
   (and (satisfies? walk/Info item) (= :map (-> item walk/info :type))))
 
+(defn- log [x & args]
+  ;; (apply util/log! (conj args x))
+  x)
+
 (defn- generic-remove [node-id item pad struct]
   (if (is-map? item)
-    (flatten (map-remove node-id (partition 2 struct) pad))
+    (log (flatten (map-remove node-id (partition 2 struct) pad)) "<-" struct)
     (filter #(not= (:index %) node-id) struct)))
 
 (defn- get-real-node [nmap path]

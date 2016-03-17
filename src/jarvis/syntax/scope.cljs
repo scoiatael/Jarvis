@@ -23,7 +23,9 @@
                                     '=}))
 
 (defn- list-contains? [list elem]
-  (some #(= % elem) list))
+  (if (seqable? list)
+    (some #(= % elem) list)
+    nil))
 
 (defrecord RootScope []
   Scope

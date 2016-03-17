@@ -95,14 +95,19 @@
     (state/insert-code-at to-check (ingest-form code-to-check))
     (check)))
 
+(defn- recheck-path [path]
+  (if (> (count path) 1)
+    ;; We cut part of node, need to recheck
+    (recheck (nth path 1))))
+
 (defn paste-node [path node-id]
   (util/log! "Paste" node-id "into" path)
   (state/paste-node path node-id (state/pasting))
   (toggle-pasting)
-  (recheck (nth path 1)))
+  (recheck-path path))
 
 (defn cut-node [path node-id]
   (util/log! "Cut" node-id "from" path)
   (state/remove-node path node-id)
-  (recheck (nth path 1))
+  (recheck-path path)
   (toggle-pasting node-id))

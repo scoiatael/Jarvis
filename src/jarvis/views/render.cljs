@@ -160,6 +160,7 @@
               c)))
 
 (defn- render-map [o k]
+  ;; (util/log! k)
   (let [par (partition 2 k)
         sorted (sort-by #(-> % first walk/info :id) par)
         children (->> sorted
