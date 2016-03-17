@@ -96,7 +96,7 @@
       nmap
       (let [obsolete-index (:index obsolete-node)]
         (-> nmap
-            (update-in [:nmap root] pop)
+            (update-in [:nmap root] butlast)
             (update-in [:nmap] #(dissoc % obsolete-index))
             ;; TODO: run GC periodically, not each time
             clean-garbage)))))

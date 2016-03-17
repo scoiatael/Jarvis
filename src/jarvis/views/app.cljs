@@ -62,9 +62,7 @@
 
 (defn- render-circle-controllers [codes]
   [v-box
-   :children [[gap :size "1"]
-
-              [rc/md-circle-icon-button
+   :children [[rc/md-circle-icon-button
                :md-icon-name "zmdi-plus"
                :on-click lifecycle/add-new-node]
 
