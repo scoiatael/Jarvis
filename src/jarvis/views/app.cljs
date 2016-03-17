@@ -10,7 +10,7 @@
             [jarvis.views.colors.solarized :as sol]
             [jarvis.views.render :as r]
             [jarvis.syntax.walk :as walk]
-            [jarvis.util.logger :as util]))
+            [jarvis.util.core :as util]))
 
 (defonce ^:private *show-code-box* (atom false))
 (defonce ^:private *introspect* (atom false))
@@ -73,21 +73,30 @@
                :on-click lifecycle/pop-code
                :disabled? (< (count codes) 1)]]])
 
+(defn- on-suggested-fn-chosen [ns fn]
+  (util/log! "got" ns "/" fn)
+  (lifecycle/push-code (str ns "/" fn)))
+
 (defn- render-namespace [name functions]
-  [v-box :children
-   [[:div [:b name]]
-    (if (< (count functions) 4)
-      [h-box
-       :children [[box :style {:width "1em"} :child [:div]]
-                  [v-box
-                   :children (map (fn [item] (str item)) functions)]]]
-      [single-dropdown
-       :filter-box? true
-       :width "100%"
-       :choices (into [] (map-indexed (fn [id it] {:id id :label (str it)}) functions))
-       :model nil ;; To render placeholder
-       :placeholder "Search for one"
-       :on-change #(util/log! "chosen:" %)])]])
+  (let [on-click #(on-suggested-fn-chosen name %)
+        render-function (fn [fn]
+                          [box
+                           :child (str fn)
+                           :attr {:on-click (partial util/dont-bubble #(on-click fn))}])]
+    [v-box :children
+     [[:div [:b name]]
+      (if (< (count functions) 4)
+        [h-box
+         :children [[box :style {:width "1em"} :child [:div]]
+                    [v-box
+                     :children (map render-function functions)]]]
+        [single-dropdown
+         :filter-box? true
+         :width "100%"
+         :choices (into [] (map-indexed (fn [id it] {:id id :label (str it)}) functions))
+         :model nil
+         :placeholder "Search for one"
+         :on-change #(do (on-click (nth functions %)))])]]))
 
 (defn- render-suggestions [suggestions]
   [v-box

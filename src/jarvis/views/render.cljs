@@ -5,7 +5,7 @@
             [jarvis.views.colors.solarized :as sol]
             [jarvis.syntax.walk :as walk]
             [jarvis.views.font :as font]
-            [jarvis.util.logger :as util]))
+            [jarvis.util.core :as util]))
 
 (defn- render-errors [errors]
   (let [has-errors? (not (empty? errors))]
@@ -19,12 +19,7 @@
        :md-icon-name "zmdi-alert-triangle"]
       [:div])))
 
-(defn- dont-bubble [f ev]
-  (do
-    (if (nil? (.-stopPropagation ev))
-      (set! (.-cancelBubble ev) true)
-      (.stopPropagation ev))
-    (f)))
+(def dont-bubble util/dont-bubble)
 
 (defn- attrs [o]
   (let [id (:id o)
