@@ -1,5 +1,5 @@
 (ns jarvis.views.app
-  (:require [re-com.core :refer [v-box box h-box input-textarea gap] :as rc]
+  (:require [re-com.core :refer [v-box box h-box input-textarea gap single-dropdown] :as rc]
             [reagent.core :refer [atom]]
             [garden.core :refer [css]]
             [jarvis.lifecycle :as lifecycle]
@@ -74,12 +74,25 @@
                :disabled? (< (count codes) 1)]]])
 
 (defn- render-namespace [name functions]
-  [v-box
-   :children (map (fn [item] (str item)) functions)])
+  [v-box :children
+   [[:div [:b name]]
+    (if (< (count functions) 4)
+      [h-box
+       :children [[box :style {:width "1em"} :child [:div]]
+                  [v-box
+                   :children (map (fn [item] (str item)) functions)]]]
+      [single-dropdown
+       :filter-box? true
+       :width "100%"
+       :choices (into [] (map-indexed (fn [id it] {:id id :label (str it)}) functions))
+       :model nil ;; To render placeholder
+       :placeholder "Search for one"
+       :on-change #(util/log! "chosen:" %)])]])
 
 (defn- render-suggestions [suggestions]
   [v-box
-   :children (map (fn [item] [render-namespace (first item) (last item)]) suggestions)])
+   :children (map (fn [item] [render-namespace (first item) (last item)]) suggestions)
+   :style {:width "100%"}])
 
 (defn- main-component [state]
   (let [pasting? (s/pasting? state)

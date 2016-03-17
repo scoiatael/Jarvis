@@ -53,7 +53,7 @@
   (update-in state [:nodes] #(nmap/update-node % node-id update)))
 
 (defn update-suggestions [state suggestions]
-  (update-in state [:suggestions] (constantly suggestions)))
+  (update-in state [:suggestions] #(into % suggestions)))
 
 (defn remove-node [state path node-id]
   (update-in state [:nodes] #(nmap/remove-node % path node-id)))

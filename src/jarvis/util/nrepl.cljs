@@ -97,7 +97,8 @@
   (go (-> var resolve! <! no-doc-err? cb)))
 
 (defn parse-functions [funs]
-  (-> funs reader/read-string))
+  (if (string? funs)
+    (-> funs reader/read-string)))
 
 (defn functions!
   ([cb]

@@ -10,7 +10,8 @@
 (def ^:const ^:private global-ns "clojure.core")
 
 (defn update-suggestions []
-  (nrepl/functions! (fn [ns-funs] (state/update-suggestions {"user" ns-funs}))))
+  (doseq [ns ["user" "clojure.core"]]
+    (nrepl/functions! ns (fn [ns-funs] (state/update-suggestions {ns ns-funs})))))
 
 (defn- ingest-form [form]
   (->> form
