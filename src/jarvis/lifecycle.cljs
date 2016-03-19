@@ -9,29 +9,40 @@
 
 (def ^:const ^:private global-ns "clojure.core")
 
+(defn- add-suggestion [ns ns-funs]
+  (state/off-the-record
+   (fn []
+     (state/update-suggestions {ns ns-funs}))))
+
 (defn update-suggestions []
   (doseq [ns ["user" "clojure.core"]]
-    (nrepl/functions! ns (fn [ns-funs] (state/update-suggestions {ns ns-funs})))))
+    (nrepl/functions! ns (partial add-suggestion ns))))
 
 (defn- ingest-form [form]
   (->> form
        t/parse))
 
 (defn- add-error [id err]
-  (state/update-node id #(walk/with-err % err)))
+  (state/off-the-record
+   (fn []
+     (state/update-node id #(walk/with-err % err)))))
 
 (defn- check-code [code]
   (t/check add-error code))
 
 (defn unmark [id]
-  (when-not (nil? id)
-    (state/swap-active! #(if (= id %) nil %))
-    (state/update-node id #(walk/with-info % {:marked false}))))
+  (state/off-the-record
+   (fn []
+     (when-not (nil? id)
+       (state/swap-active! #(if (= id %) nil %))
+       (state/update-node id #(walk/with-info % {:marked false}))))))
 
 (defn mark [id]
-  (unmark (state/active))
-  (state/swap-active! (constantly id))
-  (state/update-node id #(walk/with-info % {:marked true})))
+  (state/off-the-record
+   (fn []
+     (unmark (state/active))
+     (state/swap-active! (constantly id))
+     (state/update-node id #(walk/with-info % {:marked true})))))
 
 (defn each [f args]
   (loop [s (seq args)]
@@ -87,7 +98,11 @@
   (let [fname tmp-file]
     (file/write fname contents #(nrepl/open! fname))))
 
-(defn- toggle-pasting [& args] (state/swap-pasting! #(or (first args) (not %))))
+(defn- toggle-pasting [& args]
+  (let [swap? (empty? args)
+        new-value (first args)
+        modify-fn (if swap? not (constantly new-value))]
+    (state/swap-pasting! modify-fn)))
 
 (defn- recheck [node]
   (let [to-check node
@@ -102,13 +117,24 @@
     (recheck (nth path 1))))
 
 (defn paste-node [path node-id]
-  (util/log! "Paste" node-id "into" path)
-  (state/paste-node path node-id (state/pasting))
-  (toggle-pasting)
-  (recheck-path path))
+  (state/with-single-record
+    (fn []
+      (state/paste-node path node-id (state/pasting))
+      (toggle-pasting)
+      (recheck-path path))))
 
 (defn cut-node [path node-id]
-  (util/log! "Cut" node-id "from" path)
-  (state/remove-node path node-id)
-  (recheck-path path)
-  (toggle-pasting node-id))
+  (state/with-single-record
+    (fn []
+      (state/remove-node path node-id)
+      (recheck-path path)
+      (toggle-pasting node-id))))
+
+(defn delete []
+  (toggle-pasting nil))
+
+(defn undo []
+  (state/undo!))
+
+(defn redo []
+  (state/redo!))

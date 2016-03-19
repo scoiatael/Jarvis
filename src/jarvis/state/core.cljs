@@ -1,9 +1,13 @@
 (ns jarvis.state.core
   (:require [reagent.core :as reagent]
             [jarvis.util.logger :as util]
-            [jarvis.state.helpers :as h]))
+            [jarvis.state.helpers :as h]
+            [historian.core :as historian :refer-macros [off-the-record with-single-record]]))
 
-(defonce ^:private state (reagent/atom h/empty-state))
+(defonce ^:private state (do
+                           (historian/replace-library! (reagent/atom []))
+                           (historian/replace-prophecy! (reagent/atom []))
+                           (historian/record! (reagent/atom h/empty-state) :state.core)))
 
 (defn- modify [field fun] (swap! state #(h/update-fields % [field] fun)))
 
@@ -26,6 +30,12 @@
 (defn update-suggestions [suggestions] (swap! state #(h/update-suggestions % suggestions)))
 (defn remove-node [path node-id] (swap! state #(h/remove-node % path node-id)))
 (defn paste-node [path node-id node] (swap! state #(h/paste-node % path node-id node)))
+
+;; History
+(def undo! historian/undo!)
+(def redo! historian/redo!)
+(defn off-the-record [f] (historian/off-the-record (f)))
+(defn with-single-record [f] (historian/with-single-record (f)))
 
 ;; Pure
 (defn fetch [] @state)

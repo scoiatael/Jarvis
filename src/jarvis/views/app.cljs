@@ -67,6 +67,18 @@
                :on-click lifecycle/add-new-node]
 
               [rc/md-circle-icon-button
+               :md-icon-name "zmdi-delete"
+               :on-click lifecycle/delete]
+
+              [rc/md-circle-icon-button
+               :md-icon-name "zmdi-undo"
+               :on-click lifecycle/undo]
+
+              [rc/md-circle-icon-button
+               :md-icon-name "zmdi-file-text"
+               :on-click lifecycle/open-file]
+
+              [rc/md-circle-icon-button
                :md-icon-name "zmdi-minus"
                :on-click lifecycle/pop-code
                :disabled? (< (count codes) 1)]]])
@@ -98,7 +110,9 @@
 
 (defn- render-suggestions [suggestions]
   [v-box
-   :children (map (fn [item] [render-namespace (first item) (last item)]) suggestions)
+   :children (->> suggestions
+                  (sort-by first)
+                  (map (fn [item] [render-namespace (first item) (last item)])))
    :style {:width "100%"}])
 
 (defn- main-component [state]
@@ -107,13 +121,14 @@
         suggestions (s/suggestions state)]
     [h-box
      :style { :height "100%" }
-     :children [[box :size "200px" :child [render-suggestions suggestions]]
+     :gap "1em"
+     :children [[render-circle-controllers codes]
+
+                [box :size "200px" :child [render-suggestions suggestions]]
 
                 [box
                  :size "1"
-                 :child [render-codes pasting? codes]]
-
-                [render-circle-controllers codes]]]))
+                 :child [render-codes pasting? codes]]]]))
 
 (defn main [state-getter]
   (let [state (state-getter)

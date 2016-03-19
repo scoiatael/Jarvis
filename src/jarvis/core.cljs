@@ -8,7 +8,8 @@
             [jarvis.util.bus :as bus]
             [reagent.core :as reagent]
             [goog.style]
-            [cljs.nodejs :as nodejs]))
+            [cljs.nodejs :as nodejs]
+            [jarvis.lifecycle :as lifecycle]))
 
 (def electron (nodejs/require "electron"))
 
@@ -29,7 +30,9 @@
 
   (.once ipc/renderer "server-started"
          (fn [srv] (nrepl/connect-to-server
-                   (fn [] (util/log! "Connected to nREPL")))))
+                   (fn []
+                     (util/log! "Connected to nREPL")
+                     (lifecycle/update-suggestions)))))
 
   (util/log! "Requesting nREPL start..")
   (ipc/start-server! {})

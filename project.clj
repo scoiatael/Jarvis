@@ -7,6 +7,7 @@
                  [org.clojure/clojurescript "1.7.228" :exclusions [org.apache.ant/ant]]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [re-com "0.7.0-alpha1"]
+                 [historian "1.1.0"]
                  [re-frame "0.5.0"]
                  [figwheel "0.4.0"]
                  [reagent "0.5.1"]
