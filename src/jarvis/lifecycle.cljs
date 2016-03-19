@@ -10,9 +10,7 @@
 (def ^:const ^:private global-ns "clojure.core")
 
 (defn- add-suggestion [ns ns-funs]
-  (state/off-the-record
-   (fn []
-     (state/update-suggestions {ns ns-funs}))))
+  (state/update-suggestions {ns ns-funs}))
 
 (defn update-suggestions []
   (doseq [ns ["user" "clojure.core"]]
