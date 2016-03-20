@@ -130,13 +130,20 @@
                  :size "1"
                  :child [render-codes pasting? codes]]]]))
 
+(defn- status-bar [state]
+  [box
+   :style {:background-color sol/green}
+   :child [:div "Status bar"]])
+
 (defn main [state-getter]
   (let [state (state-getter)
         modal (s/modal state)
         error (s/error state)]
     [v-box
      :height "inherit"
-     :children [[main-component state]
+     :children [[status-bar state]
+
+                [main-component state]
 
                 (if-not (nil? error)
                   (render-error error)
