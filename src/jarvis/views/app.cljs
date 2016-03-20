@@ -2,7 +2,6 @@
   (:require [re-com.core :refer [v-box box h-box input-textarea gap single-dropdown] :as rc]
             [reagent.core :refer [atom]]
             [garden.core :refer [css]]
-            [jarvis.lifecycle :as lifecycle]
             [jarvis.state.helpers :as s]
             [jarvis.syntax.core :as sc]
             [jarvis.syntax.pretty-print :as pp]
@@ -10,7 +9,8 @@
             [jarvis.views.colors.solarized :as sol]
             [jarvis.views.render :as r]
             [jarvis.syntax.walk :as walk]
-            [jarvis.util.core :as util]))
+            [jarvis.util.core :as util]
+            [re-frame.core :as r-f :refer [subscribe dispatch]]))
 
 (defonce ^:private *show-code-box* (atom false))
 (defonce ^:private *introspect* (atom false))
@@ -18,8 +18,8 @@
 (defn- edit-elem [state]
   [input-textarea
    :on-change #(do
-                 (lifecycle/push-code %)
-                 (if (nil? (s/error state)) (lifecycle/reset-modal)))
+                 (dispatch [:push-code %])
+                 (if (nil? (s/error state)) (dispatch [:reset-modal])))
    :model ""
    :width "inherit"])
 
@@ -28,15 +28,15 @@
       [rc/border
        :border (str "1px dashed " "transparent")
        :child [r/render
-               {:on-click #(do
-                             ;; (util/log! %1 %2)
-                             (if pasting? (lifecycle/paste-node %2 %1) (lifecycle/cut-node %2 %1)))
+               {:on-click #(if pasting?
+                             (dispatch [:paste-node %2 %1])
+                             (dispatch [:cut-node %2 %1]))
                 :path []
                 :paster pasting?
                 :id 0 ;; FIXME: nodes_map root... ugly constant.
                 :on-hover #(if (= :over %1)
-                             (lifecycle/mark %2)
-                             (lifecycle/unmark %2))}
+                             (dispatch [:mark %2])
+                             (dispatch [:unmark %2]))}
                item-to-show]]))
 
 (defn- render-codes [pasting? codes]
@@ -50,7 +50,7 @@
    :wrap-nicely? true
    :backdrop-color sol/red
    :backdrop-opacity 0.4
-   :backdrop-on-click lifecycle/reset-error])
+   :backdrop-on-click #(dispatch [:reset-error])])
 
 (defn- render-modal [state]
   [rc/modal-panel
@@ -58,34 +58,33 @@
    :wrap-nicely? true
    :backdrop-color "#666666"
    :backdrop-opacity 0.4
-   :backdrop-on-click lifecycle/reset-modal])
+   :backdrop-on-click #(dispatch [:reset-modal])])
 
 (defn- render-circle-controllers [codes]
   [v-box
    :children [[rc/md-circle-icon-button
                :md-icon-name "zmdi-plus"
-               :on-click lifecycle/add-new-node]
+               :on-click #(dispatch [:add-new-node])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-delete"
-               :on-click lifecycle/delete]
+               :on-click #(dispatch [:delete])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-undo"
-               :on-click lifecycle/undo]
+               :on-click #(dispatch [:undo])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-file-text"
-               :on-click lifecycle/open-file]
+               :on-click #(dispatch [:open-file])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-minus"
-               :on-click lifecycle/pop-code
+               :on-click #(dispatch [:pop-code])
                :disabled? (< (count codes) 1)]]])
 
 (defn- on-suggested-fn-chosen [ns fn]
-  (util/log! "got" ns "/" fn)
-  (lifecycle/push-code (str ns "/" fn)))
+  (dispatch [:push-code (str ns "/" fn)]))
 
 (defn- render-namespace [name functions]
   (let [on-click #(on-suggested-fn-chosen name %)
@@ -135,21 +134,23 @@
    :style {:background-color sol/green}
    :child [:div "Status bar"]])
 
-(defn main [state-getter]
-  (let [state (state-getter)
-        modal (s/modal state)
-        error (s/error state)]
-    [v-box
-     :height "inherit"
-     :children [[status-bar state]
+(defn main []
+  (let [state-getter (subscribe [:db-state])]
+    (fn []
+      (let [state @state-getter
+            modal (s/modal state)
+            error (s/error state)]
+        [v-box
+         :height "inherit"
+         :children [[status-bar state]
 
-                [main-component state]
+                    [main-component state]
 
-                (if-not (nil? error)
-                  (render-error error)
+                    (if-not (nil? error)
+                      (render-error error)
 
-                  (if-not (nil? modal)
-                    (render-modal state)))]]))
+                      (if-not (nil? modal)
+                        (render-modal state)))]]))))
 
 (defn styles []
   (css [:body
