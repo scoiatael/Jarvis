@@ -18,7 +18,8 @@
 (def ^:pricate check-schema-mw (after (partial check-and-throw st/schema)))
 
 (def ^:private middlewares
-  [r-f/debug
+  [check-schema-mw
+   r-f/debug
    r-f/trim-v])
 
 (defn- do-nothing [db _ ]

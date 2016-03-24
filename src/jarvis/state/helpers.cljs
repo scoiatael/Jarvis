@@ -7,7 +7,7 @@
              :active (s/maybe s/Num)
              :error (s/maybe s/Str)
              :modal (s/maybe s/Bool)
-             :suggestions {s/Str [s/Str]}
+             :suggestions {s/Str [s/Symbol]}
              :pasting (s/maybe s/Num)})
 (defrecord JarvisState [nodes active error modal suggestions pasting])
 
