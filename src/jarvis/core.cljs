@@ -28,6 +28,8 @@
 (defn init! []
   (goog.style/installStyles (app/styles))
 
+  (r-f/dispatch [:initialise-db])
+
   (subs/register!)
   (handlers/register!)
 
@@ -35,7 +37,7 @@
          (fn [srv] (nrepl/connect-to-server
                    (fn []
                      (util/log! "Connected to nREPL")
-                     (r-f/dispatch [:update-suggestions])))))
+                     (r-f/dispatch [:repl-connected])))))
 
   (util/log! "Requesting nREPL start..")
   (ipc/start-server! {})

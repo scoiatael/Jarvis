@@ -1,226 +1,115 @@
 (ns jarvis.handlers
-  (:require [re-frame.core :as r-f :refer [register-handler dispatch]]
-            [jarvis.syntax.core :as t]
-            [jarvis.syntax.walk :as walk]
-            [jarvis.syntax.parser :as parser]
-            [jarvis.util.file :as file]
-            [jarvis.util.nrepl :as nrepl]
-            [jarvis.util.logger :as util]
-            [jarvis.state.helpers :as s]))
+  (:require [re-frame.core :as r-f :refer [register-handler dispatch after]]
+            [jarvis.reducers :as r]
+            [schema.core :as s]
+            [jarvis.state.helpers :as st]))
 
 ;; -- Helpers ------------
+(defn check-and-throw
+  "throw an exception if db doesn't match the schema."
+  [a-schema db]
+  (if-let [problems  (s/check a-schema db)]
+    (throw (js/Error. (str "schema check failed: " problems)))))
 
-(defn- ingest-form [form]
-  (->> form
-       t/parse))
-
-(defn- check-code [code]
-  (t/check #(dispatch [:add-error %1 %2]) code))
-
-;; TODO: doseq
-(defn- each [f args]
-  (loop [s (seq args)]
-    (when-not (empty? s)
-      (f (first s))
-      (recur (rest s)))))
-
-(defn- recheck-path [path]
-  (if (> (count path) 1)
-    ;; We cut part of node, need to recheck
-    (dispatch [:recheck (nth path 1)])))
-
-(defn- unmark [db id]
-  (if (nil? id)
-    db
-    (-> db
-        (s/update-fields [:active] #(if (= id %) nil %))
-        (s/update-node id #(walk/with-info % {:marked false})))))
+;; Event handlers change state, that's their job. But what heppens if there's
+;; a bug and they corrupt this state in some subtle way? This middleware is run after
+;; each event handler has finished, and it checks app-db against a schema.  This
+;; helps us detect event handler bugs early.
+(def ^:pricate check-schema-mw (after (partial check-and-throw st/schema)))
 
 (def ^:private middlewares
   [r-f/debug
    r-f/trim-v])
 
-;; -- Event Handlers -----
+(defn- do-nothing [db _ ]
+  db)
 
 (defn register! []
+
+  ;; -- User Event Handlers ----------------------
 
   (register-handler
    :initialise-db
    middlewares
-   (fn [_ _]
-     s/empty-state))
+   r/initialise-db)
+
+  (register-handler
+   :repl-connected
+   middlewares
+   r/update-suggestions)
+
+  (register-handler
+   :edit-elem-changed
+   middlewares
+   r/modal->code)
+
+  (register-handler
+   :node-clicked
+   middlewares
+   r/node-paste-or-cut)
+
+  (register-handler
+   :node-hover
+   middlewares
+   (fn [db [ev node]]
+     (case ev
+       :over (r/mark-node db [node])
+       :out (r/unmark-node db [node]))))
+
+  (register-handler
+   :error-backdrop-clicked
+   middlewares
+   r/reset-error)
+
+  (register-handler
+   :modal-backdrop-clicked
+   middlewares
+   r/reset-modal)
+
+  (register-handler
+   :icon-plus-clicked
+   middlewares
+   r/show-modal)
+
+  (register-handler
+   :icon-delete-clicked
+   middlewares
+   r/leave-pasting-mode)
+
+  (register-handler
+   :icon-undo-clicked
+   middlewares
+   do-nothing)
+
+  (register-handler
+   :icon-file-clicked
+   middlewares
+   r/open-file)
+
+  (register-handler
+   :icon-minus-clicked
+   middlewares
+   r/pop-code)
+
+  (register-handler
+   :namespace-function-clicked
+   middlewares
+   r/push-namespaced-fn)
+
+  ;; -- Lifecycle Event Handlers
 
   (register-handler
    :add-suggestion
    middlewares
-   (fn [db [ns ns-funs]]
-     (s/update-suggestions db {ns ns-funs})))
-
-  (register-handler
-   :update-suggestions
-   middlewares
-   (fn [db _]
-     (doseq [ns ["user" "clojure.core"]]
-       (nrepl/functions! ns #(dispatch [:add-suggestion ns %])))
-     db))
+   r/add-namespace-functions)
 
   (register-handler
    :add-error
    middlewares
-   (fn [db [id err]]
-     (s/update-node db id #(walk/with-err % err))))
-
-  (register-handler
-   :unmark
-   middlewares
-   (fn [db [id]]
-     (unmark db id)))
-
-  (register-handler
-   :mark
-   middlewares
-   (fn [db [id]]
-     (-> db
-         (unmark (:active db))
-         (s/update-fields [:active] (constantly id))
-         (s/update-node id #(walk/with-info % {:marked true})))))
-
-  (register-handler
-   :check
-   middlewares
-   (fn [db _]
-     (let [nodes (s/nodes db)]
-       (each check-code nodes))
-     db))
-
-  (register-handler
-   :push-code
-   middlewares
-   (fn [db [code]]
-     (let [parsed (parser/form code)
-           error (:error parsed)
-           form (:form parsed)]
-       (if (nil? error)
-         (do
-           (nrepl/eval! form)
-           (let [new-db (s/push-code db (ingest-form form))]
-             ;; TODO: check only new code
-             (dispatch [:check])
-             (dispatch [:update-suggestions])
-             new-db))
-         (s/update-fields db [:error] (constantly error))))))
+   r/set-node-error)
 
   (register-handler
    :push-file
    middlewares
-   (fn [_ [contents]]
-     (let [parsed (->> contents parser/file (map ingest-form))]
-       (let [new-db (reduce s/push-code s/empty-state parsed)]
-         (dispatch [:check])
-         (dispatch [:update-suggestions])
-         new-db))))
-
-  (register-handler
-   :set-modal
-   middlewares
-   (fn [db _]
-     (s/update-fields db [:modal] (constantly true))))
-
-  (register-handler
-   :add-new-node
-   middlewares
-   (fn [db _]
-     (dispatch [:set-modal])
-     db))
-
-  (register-handler
-   :pop-code
-   middlewares
-   (fn [db _]
-     (s/pop-code db)))
-
-  (register-handler
-   :reset-error
-   middlewares
-   (fn [db _]
-     (s/update-fields db [:error] (constantly nil))))
-
-  (register-handler
-   :reset-modal
-   middlewares
-   (fn [db _]
-     (s/update-fields db [:modal] (constantly nil))))
-
-  (def ^:private tmp-file "examples/file1.clj")
-
-  (register-handler
-   :open-file
-   middlewares
-   (fn [db [fname]]
-     (let [fname tmp-file]
-       (file/open fname (fn [contents]
-                          (nrepl/open! fname)
-                          (dispatch [:push-file contents]))))
-     db))
-
-  (register-handler
-   :write-file
-   middlewares
-   (fn [db [fname contents]]
-     (let [fname tmp-file]
-       (file/write fname contents #(nrepl/open! fname)))
-     db))
-
-  (register-handler
-   :toggle-pasting
-   middlewares
-   (fn [db args]
-     (let [swap? (empty? args)
-           new-value (first args)
-           modify-fn (if swap? not (constantly new-value))]
-       (s/update-fields db [:pasting] modify-fn))))
-
-  (register-handler
-   :recheck
-   middlewares
-   (fn [db [node]]
-     (let [to-check node
-           code-to-check (->> to-check (s/code db) t/strip)]
-       (let [new-db (s/push-code db to-check (ingest-form code-to-check))]
-         (dispatch [:check])
-         new-db))))
-
-  (register-handler
-   :paste-node
-   middlewares
-   (fn [db [path node-id]]
-     (let [new-db (s/paste-node db path node-id (:pasting db))]
-       (dispatch [:toggle-pasting])
-       (recheck-path path)
-       new-db)))
-
-  (register-handler
-   :cut-node
-   middlewares
-   (fn [db [path node-id]]
-     (let [new-db (s/remove-node db path node-id)]
-       (recheck-path path)
-       (dispatch [:toggle-pasting node-id])
-       new-db)))
-
-  (register-handler
-   :delete
-   middlewares
-   (fn [db _]
-     (dispatch [:toggle-pasting nil])
-     db))
-
-  (register-handler
-   :undo
-   middlewares
-   (fn [db _] db))
-
-  (register-handler
-   :redo
-   middlewares
-   (fn [db _] db)))
+   r/push-file)
+  )

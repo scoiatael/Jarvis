@@ -17,9 +17,7 @@
 
 (defn- edit-elem [state]
   [input-textarea
-   :on-change #(do
-                 (dispatch [:push-code %])
-                 (if (nil? (s/error state)) (dispatch [:reset-modal])))
+   :on-change #(dispatch [:edit-elem-changed %])
    :model ""
    :width "inherit"])
 
@@ -28,15 +26,11 @@
       [rc/border
        :border (str "1px dashed " "transparent")
        :child [r/render
-               {:on-click #(if pasting?
-                             (dispatch [:paste-node %2 %1])
-                             (dispatch [:cut-node %2 %1]))
+               {:on-click #(dispatch [:node-clicked %1 %2])
                 :path []
                 :paster pasting?
                 :id 0 ;; FIXME: nodes_map root... ugly constant.
-                :on-hover #(if (= :over %1)
-                             (dispatch [:mark %2])
-                             (dispatch [:unmark %2]))}
+                :on-hover #(dispatch [:node-hover %1 %2])}
                item-to-show]]))
 
 (defn- render-codes [pasting? codes]
@@ -50,7 +44,7 @@
    :wrap-nicely? true
    :backdrop-color sol/red
    :backdrop-opacity 0.4
-   :backdrop-on-click #(dispatch [:reset-error])])
+   :backdrop-on-click #(dispatch [:error-backdrop-clicked])])
 
 (defn- render-modal [state]
   [rc/modal-panel
@@ -58,36 +52,33 @@
    :wrap-nicely? true
    :backdrop-color "#666666"
    :backdrop-opacity 0.4
-   :backdrop-on-click #(dispatch [:reset-modal])])
+   :backdrop-on-click #(dispatch [:modal-backdrop-clicked])])
 
 (defn- render-circle-controllers [codes]
   [v-box
    :children [[rc/md-circle-icon-button
                :md-icon-name "zmdi-plus"
-               :on-click #(dispatch [:add-new-node])]
+               :on-click #(dispatch [:icon-plus-clicked])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-delete"
-               :on-click #(dispatch [:delete])]
+               :on-click #(dispatch [:icon-delete-clicked])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-undo"
-               :on-click #(dispatch [:undo])]
+               :on-click #(dispatch [:icon-undo-clicked])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-file-text"
-               :on-click #(dispatch [:open-file])]
+               :on-click #(dispatch [:icon-file-clicked])]
 
               [rc/md-circle-icon-button
                :md-icon-name "zmdi-minus"
-               :on-click #(dispatch [:pop-code])
+               :on-click #(dispatch [:icon-minus-clicked])
                :disabled? (< (count codes) 1)]]])
 
-(defn- on-suggested-fn-chosen [ns fn]
-  (dispatch [:push-code (str ns "/" fn)]))
-
 (defn- render-namespace [name functions]
-  (let [on-click #(on-suggested-fn-chosen name %)
+  (let [on-click #(dispatch [:namespace-function-clicked name %])
         render-function (fn [fn]
                           [box
                            :child (str fn)
