@@ -6,7 +6,7 @@
             [jarvis.util.file :as file]
             [jarvis.util.nrepl :as nrepl]
             [jarvis.util.logger :as util]
-            [jarvis.state.helpers :as s]))
+            [jarvis.state.core :as s]))
 
 
 ;; -- Helpers ------------

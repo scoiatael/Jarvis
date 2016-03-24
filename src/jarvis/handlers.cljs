@@ -2,7 +2,7 @@
   (:require [re-frame.core :as r-f :refer [register-handler dispatch after]]
             [jarvis.reducers :as r]
             [schema.core :as s]
-            [jarvis.state.helpers :as st]))
+            [jarvis.state.core :as st]))
 
 ;; -- Helpers ------------
 (defn check-and-throw

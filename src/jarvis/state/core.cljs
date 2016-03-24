@@ -1,4 +1,4 @@
-(ns jarvis.state.helpers
+(ns jarvis.state.core
   (:require [jarvis.util.logger :as util]
             [jarvis.state.nodes-map :as nmap]
             [schema.core :as s]))

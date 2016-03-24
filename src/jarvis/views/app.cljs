@@ -2,7 +2,7 @@
   (:require [re-com.core :refer [v-box box h-box input-textarea gap single-dropdown] :as rc]
             [reagent.core :refer [atom]]
             [garden.core :refer [css]]
-            [jarvis.state.helpers :as s]
+            [jarvis.state.core :as s]
             [jarvis.syntax.core :as sc]
             [jarvis.syntax.pretty-print :as pp]
             [jarvis.views.font :as font]
