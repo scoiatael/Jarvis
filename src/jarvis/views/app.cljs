@@ -137,11 +137,11 @@
 
                     [main-component state]
 
-                    (if-not (nil? error)
-                      (render-error error)
+                    (if-not (nil? modal)
+                      (render-modal state))
 
-                      (if-not (nil? modal)
-                        (render-modal state)))]]))))
+                    (if-not (nil? error)
+                      (render-error error))]]))))
 
 (defn styles []
   (css [:body

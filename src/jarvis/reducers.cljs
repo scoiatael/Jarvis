@@ -48,7 +48,7 @@
       (set-error db error))))
 
 (defn- set-modal [db value]
-  (s/update-fields db [:modal] value))
+  (s/update-fields db [:modal] (constantly value)))
 
 (defn- recheck [db node]
   (let [to-check node
@@ -143,7 +143,7 @@
 (defn modal->code [db [code]]
   (let [new-db (push-code db code)]
     (if (nil? (s/error new-db))
-      (set-modal db nil)
+      (set-modal new-db nil)
       new-db)))
 
 (defn node-paste-or-cut [db [node path]]

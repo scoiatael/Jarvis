@@ -5,7 +5,7 @@
 
 (def schema {:nodes (s/pred #(instance? nmap/NodesMap %))
              :active (s/maybe s/Num)
-             :error (s/maybe s/Str)
+             :error (s/maybe js/Error)
              :modal (s/maybe s/Bool)
              :suggestions {s/Str [s/Symbol]}
              :pasting (s/maybe s/Num)})
