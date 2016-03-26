@@ -1,6 +1,6 @@
 (ns jarvis.core
   (:require [figwheel.client :as fw :include-macros true]
-            [jarvis.views.app :as app]
+            [jarvis.views.core :as app]
             [jarvis.util.nrepl :as nrepl]
             [jarvis.util.ipc :as ipc]
             [jarvis.util.logger :as util]

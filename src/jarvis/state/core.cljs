@@ -19,15 +19,6 @@
 (defn nodes-length [state]
   (-> state :nodes nmap/root-length))
 
-(defn error [state]
-  (:error state))
-
-(defn modal [state]
-  (:modal state))
-
-(defn suggestions [state]
-  (:suggestions state))
-
 (defn valid-index? [state index]
   (and (number? index) (< index (nodes-length state)) (< -1 index)))
 

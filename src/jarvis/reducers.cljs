@@ -127,7 +127,7 @@
 
 (defn modal->code [db [code]]
   (let [new-db (push-code db code)]
-    (if (nil? (s/error new-db))
+    (if (nil? (:error new-db))
       (set-modal new-db nil)
       new-db)))
 

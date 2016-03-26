@@ -1,4 +1,4 @@
-(ns jarvis.views.render
+(ns jarvis.views.components.code_boxes
   (:require [re-com.core :as rc]
             [re-com.box :refer [flex-flow-style]]
             [garden.color :as color]
