@@ -1,16 +1,26 @@
 (ns jarvis.state.nodes-map
-  (:require [jarvis.util.logger :as util]
-            [jarvis.syntax.walk :as walk]
-            [jarvis.util.logger :as util]))
+  (:require [jarvis.syntax.walk :as walk]
+            [jarvis.util.logger :as util]
+            [schema.core :as s]))
 
 (defprotocol Stub
-  (expand [this nmap]))
+  (expand [this nmap])
+  (empty-stub? [this]))
 
+(defn- nmap_node? [node] (or (satisfies? walk/Info node) (not (seq? node)) (every? #(satisfies? Stub %) node)))
+
+(def schema {:root (s/pred #(satisfies? Stub %))
+             :nmap {s/Int (s/pred nmap_node?)}
+             :index s/Num})
 (defrecord NodesMap [root nmap index])
 
 (defrecord StubImpl [index]
   Stub
-  (expand [this nmap] (-> this :index nmap)))
+  (expand [this nmap] (-> this :index nmap))
+  (empty-stub? [this] false))
+
+(defn fresh []
+  (NodesMap. (StubImpl. 0) {0 '()} 1))
 
 (defn- with-id-info [node id]
   (if (satisfies? walk/Info node)
@@ -31,7 +41,7 @@
         bind-this (fn [new-form]
                     (swap! map-atom #(assoc % this-index new-form))
                     (StubImpl. this-index))]
-    (swap! index-atom #(+ 1 %))
+    (swap! index-atom inc)
     (walk/walk (partial flatten! index-atom map-atom) bind-this form)
     (StubImpl. this-index)))
 
@@ -45,10 +55,8 @@
         (update-in [:index] (constantly @index-atom))
         (update-in [:nmap] (constantly @map-atom)))))
 
+(defn expand-node-index [nmap node-index] (expand-node (:nmap nmap) (StubImpl. node-index)))
 (defn nodes [nmap] (expand-node (:nmap nmap) (:root nmap)))
-
-(defn fresh []
-  (NodesMap. (StubImpl. 0) {0 []} 1))
 
 (defn push-root [nmap form]
   (let [converted (convert nmap form)
@@ -56,7 +64,18 @@
         old-root (:root nmap)]
     (-> converted
         (update-in [:root] (constantly old-root))
-        (update-in [:nmap (:index old-root)] #(conj % new-root)))))
+        (update-in [:nmap (:index old-root)] #(conj (into [] %) new-root)))))
+
+(defn replace-node [pos node list]
+  (map #(if (= (:index %) pos) node %) list))
+
+(defn swap-at-root [nmap index form]
+  (let [converted (convert nmap form)
+        new-root (:root converted)
+        old-root (:root nmap)]
+    (-> converted
+        (update-in [:root] (constantly old-root))
+        (update-in [:nmap (:index old-root)] #(replace-node index new-root (into [] %))))))
 
 (defn- all-indexes! [nmap list-atom node]
   (when (satisfies? Stub node)
@@ -82,7 +101,7 @@
       nmap
       (let [obsolete-index (:index obsolete-node)]
         (-> nmap
-            (update-in [:nmap root] pop)
+            (update-in [:nmap root] butlast)
             (update-in [:nmap] #(dissoc % obsolete-index))
             ;; TODO: run GC periodically, not each time
             clean-garbage)))))
@@ -93,3 +112,30 @@
 
 (defn update-node [nmap node-id update]
   (update-in nmap [:nmap node-id] update))
+
+(defn- generic-remove [node-id item struct]
+  (filter #(not= (:index %) node-id) struct))
+
+(defn- get-real-node [nmap path]
+  (let [inter-index (last path)
+        item (-> nmap :nmap (get inter-index))
+        index (if (satisfies? walk/Info item) (-> item walk/value :index) inter-index)]
+    [index item]))
+
+(defn remove-node [nmap path node-id]
+  (let [[index item] (get-real-node nmap path)]
+    (update-in nmap [:nmap index] (partial generic-remove node-id item))))
+
+(defn- seq-insert [pos node list]
+  (if (map? pos)
+    (let [offset (:after pos)]
+      (let [[before after] (split-at offset list)]
+        (concat before [node] after)))
+    (replace-node pos node list)))
+
+(defn- generic-insert [node-id item node struct]
+  (seq-insert node-id node struct))
+
+(defn paste-node [nmap path node-id node]
+  (let [[index item] (get-real-node nmap path)]
+    (update-in nmap [:nmap index] (partial generic-insert node-id item (StubImpl. node)))))

@@ -13,7 +13,9 @@
 
 (def ^:private debug-connection false)
 
-(def ^:private connection-options {:port port :verbose debug-connection})
+(def ^:private connection-options {:host "127.0.0.1"
+                                   :port port
+                                   :verbose debug-connection})
 
 (defn- connect-to-server [cb]
   (reset! *connection* (.connect Client (clj->js connection-options)))
@@ -38,7 +40,7 @@
   ;; (util/log! "nREPL response: " res)
   (let [val (extract-values res)]
     (when (:done? val)
-      (util/log! val)
+      ;; (util/log! "Done: " val)
       (go (>! ch val)))))
 
 (defn- with-connection! [cb]
@@ -58,7 +60,7 @@
                    expr
                    (str expr))]
     (with-connection! (fn [connection]
-                        (util/log! "Eval: " str-expr)
+                        ;; (util/log! "Eval: " str-expr)
                         (eval connection str-expr)))))
 
 (defn open! [file]
@@ -74,7 +76,7 @@
     (eval! expr)))
 
 (defn arglists! [var]
-  (let [expr `(~':arglists (~'meta #'~(symbol var)))]
+  (let [expr `(~':arglists (~'meta #'~(-> var str symbol)))]
     (eval! expr)))
 
 (defn resolve! [var]
@@ -97,7 +99,8 @@
   (go (-> var resolve! <! no-doc-err? cb)))
 
 (defn parse-functions [funs]
-  (-> funs reader/read-string))
+  (if (string? funs)
+    (-> funs reader/read-string)))
 
 (defn functions!
   ([cb]

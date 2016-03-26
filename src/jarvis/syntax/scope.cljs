@@ -1,6 +1,7 @@
 (ns jarvis.syntax.scope
   (:require [jarvis.syntax.walk :as walk]
             [jarvis.util.nrepl :as nrepl]
+            [jarvis.syntax.types :as t]
             [jarvis.util.logger :as util]))
 
 (def ^:private ^:const keyword-introducing-scope
@@ -22,7 +23,9 @@
                                     '=}))
 
 (defn- list-contains? [list elem]
-  (some #(= % elem) list))
+  (if (seqable? list)
+    (some #(= % elem) list)
+    nil))
 
 (defrecord RootScope []
   Scope

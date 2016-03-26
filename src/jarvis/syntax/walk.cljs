@@ -39,9 +39,6 @@
 
 (defn postwalk [f form] (postwalk-all #(if (satisfies? Info %) (f %) %) form))
 
-(defn strip [form]
-  (postwalk value form))
-
 (defn normalize-record [f]
   (if (record? f) (into {} f) f))
 
@@ -49,3 +46,8 @@
   (walk normalize identity (normalize-record form)))
 
 (defn each [f form] (postwalk (fn [in] (f in) in) form))
+
+(defn is-info? [x] (satisfies? Info x))
+
+(defn strip [form]
+  (postwalk value form))

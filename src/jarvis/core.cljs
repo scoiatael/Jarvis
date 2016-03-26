@@ -1,11 +1,12 @@
 (ns jarvis.core
   (:require [figwheel.client :as fw :include-macros true]
-            [jarvis.views.app :as app]
-            [jarvis.state.core :as state]
+            [jarvis.views.core :as app]
             [jarvis.util.nrepl :as nrepl]
             [jarvis.util.ipc :as ipc]
             [jarvis.util.logger :as util]
-            [jarvis.util.bus :as bus]
+            [re-frame.core :as r-f]
+            [jarvis.subs :as subs]
+            [jarvis.handlers :as handlers]
             [reagent.core :as reagent]
             [goog.style]
             [cljs.nodejs :as nodejs]))
@@ -21,15 +22,22 @@
 (enable-console-print!)
 
 (defn mount-root []
-  (reagent/render [app/main state/fetch]
+  (reagent/render [app/main]
                   (.getElementById js/document "app")))
 
 (defn init! []
   (goog.style/installStyles (app/styles))
 
+  (r-f/dispatch [:initialise-db])
+
+  (subs/register!)
+  (handlers/register!)
+
   (.once ipc/renderer "server-started"
          (fn [srv] (nrepl/connect-to-server
-                   (fn [] (util/log! "Connected to nREPL")))))
+                   (fn []
+                     (util/log! "Connected to nREPL")
+                     (r-f/dispatch [:repl-connected])))))
 
   (util/log! "Requesting nREPL start..")
   (ipc/start-server! {})

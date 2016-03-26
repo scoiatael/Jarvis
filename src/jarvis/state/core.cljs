@@ -1,26 +1,62 @@
 (ns jarvis.state.core
-  (:require [reagent.core :as reagent]
-            [jarvis.util.logger :as util]
-            [jarvis.state.helpers :as h]))
+  (:require [jarvis.util.logger :as util]
+            [jarvis.state.nodes-map :as nmap]
+            [schema.core :as s]))
 
-(defonce ^:private state (reagent/atom h/empty-state))
+(def schema {:nodes nmap/schema
+             :active (s/maybe s/Num)
+             :error (s/maybe js/Error)
+             :modal (s/maybe s/Bool)
+             :suggestions {s/Str [s/Symbol]}
+             :pasting (s/maybe s/Num)})
+(defrecord JarvisState [nodes active error modal suggestions pasting])
 
-;; Impure
-(defn reset-state! [] (reset! state h/empty-state))
-(defn push-code! [& args] (swap! state #(apply h/push-code (into [%] args))))
-(defn set-error! [error] (swap! state #(h/set-error % error)))
-(defn set-modal! [modal] (swap! state #(h/set-modal % modal)))
-(defn reset-error! [] (swap! state #(h/reset-error %)))
-(defn reset-modal! [] (swap! state #(h/reset-modal %)))
-(defn pop-code! [] (swap! state #(h/pop-code %)))
-(defn update-node [node-id update]
-  (swap! state #(h/update-node % node-id update)))
-(defn update-suggestions [suggestions]
-  (swap! state #(h/update-suggestions % suggestions)))
+(def empty-state (JarvisState. (nmap/fresh) nil nil nil {} nil))
 
-;; Pure
-(defn nodes-length [] (h/nodes-length @state))
-(defn code [& args] (apply h/code (into [@state] args)))
-(defn nodes [] (h/nodes @state))
+(defn nodes [state]
+  (-> state :nodes nmap/nodes))
 
-(defn fetch [] @state)
+(defn nodes-length [state]
+  (-> state :nodes nmap/root-length))
+
+(defn valid-index? [state index]
+  (and (number? index) (< index (nodes-length state)) (< -1 index)))
+
+(defn code [state index]
+  (nmap/expand-node-index (:nodes state) index))
+
+(defn- update-field [struct tuple]
+  (let [field (first tuple)
+        fun (last tuple)]
+    (update-in struct field fun)))
+
+(defn update-fields [state field fun & args]
+  (reduce update-field state (conj (partition 2 args) [field fun])))
+
+(defn push-code
+  ([state code]
+   (update-fields state
+                  [:nodes] #(nmap/push-root % code)))
+  ([state index code]
+   (update-fields state
+                  [:nodes] #(nmap/swap-at-root % index code))))
+
+(defn nodes-empty? [state]
+  (< (nodes-length state) 1))
+
+(defn pop-code [state]
+  (update-in state [:nodes] nmap/pop-root))
+
+(defn update-node [state node-id update]
+  (update-in state [:nodes] #(nmap/update-node % node-id update)))
+
+(defn update-suggestions [state suggestions]
+  (update-in state [:suggestions] #(into % suggestions)))
+
+(defn remove-node [state path node-id]
+  (update-in state [:nodes] #(nmap/remove-node % path node-id)))
+
+(defn paste-node [state path node-id node]
+  (update-in state [:nodes] #(nmap/paste-node % path node-id node)))
+
+(defn pasting? [state] (:pasting state))
