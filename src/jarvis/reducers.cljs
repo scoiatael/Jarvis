@@ -81,12 +81,6 @@
         (s/update-node id #(walk/with-info % {:marked false})))))
 
 ;; -- public -------------
-(defn reset-error [db _]
-  (set-error db nil))
-
-(defn reset-modal [db _]
-  (set-modal db nil))
-
 (defn unmark-node [db [id]]
   (unmark db id))
 
@@ -95,9 +89,6 @@
       (unmark (:active db))
       (s/update-fields [:active] (constantly id))
       (s/update-node id #(walk/with-info % {:marked true}))))
-
-(defn show-modal [db _]
-   (s/update-fields db [:modal] (constantly true)))
 
 (defn push-namespaced-fn [db [ns fn]]
   (push-code db (str ns "/" fn)))
@@ -124,7 +115,7 @@
     (let [parsed (->> contents parser/file (map ingest-form))]
       (let [new-db (reduce s/push-code s/empty-state parsed)]
         (check new-db)
-        ;; TODO: update only suggestions for user namspace
+        ;; TODO: update only suggestions for user namespace
         (start-update-suggestions new-db)
         new-db)))
 
@@ -133,12 +124,6 @@
 
 (defn add-namespace-functions [db [ns ns-funs]]
   (s/update-suggestions db {ns ns-funs}))
-
-(defn leave-pasting-mode [db _]
-  (set-pasting db nil))
-
-(defn enter-pasting-mode [db [value]]
-  (set-pasting db value))
 
 (defn modal->code [db [code]]
   (let [new-db (push-code db code)]

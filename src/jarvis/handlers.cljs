@@ -1,5 +1,5 @@
 (ns jarvis.handlers
-  (:require [re-frame.core :as r-f :refer [register-handler dispatch after]]
+  (:require [re-frame.core :as r-f :refer [register-handler dispatch after path]]
             [jarvis.reducers :as r]
             [schema.core :as s]
             [jarvis.state.core :as st]))
@@ -59,23 +59,23 @@
 
   (register-handler
    :error-backdrop-clicked
-   middlewares
-   r/reset-error)
+   [middlewares (path :error)]
+   (constantly nil))
 
   (register-handler
    :modal-backdrop-clicked
-   middlewares
-   r/reset-modal)
+   [middlewares (path :modal)]
+   (constantly nil))
 
   (register-handler
    :icon-plus-clicked
-   middlewares
-   r/show-modal)
+   [middlewares (path :modal)]
+   (constantly true))
 
   (register-handler
    :icon-delete-clicked
-   middlewares
-   r/leave-pasting-mode)
+   [middlewares (path :pasting)]
+   (constantly nil))
 
   (register-handler
    :icon-undo-clicked
