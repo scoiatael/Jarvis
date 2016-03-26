@@ -1,11 +1,11 @@
 (ns jarvis.views.code
   (:require [re-com.core :refer [v-box box h-box input-textarea gap single-dropdown] :as rc]
+            [re-frame.core :as r-f :refer [subscribe dispatch]]
             [reagent.core :refer [atom]]
             [jarvis.syntax.core :as sc]
-            [jarvis.views.components.code_boxes :as r]
             [jarvis.syntax.walk :as walk]
-            [jarvis.util.core :as util]
-            [re-frame.core :as r-f :refer [subscribe dispatch]]))
+            [jarvis.views.components.code_boxes :as r]
+            [jarvis.util.core :as util]))
 
 (defonce ^:private *introspect* (atom false))
 

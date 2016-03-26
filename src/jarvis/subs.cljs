@@ -4,7 +4,6 @@
             [jarvis.state.core :as s]))
 
 (defn register! []
-
   (register-sub
    :can-remove?
    (fn [db _]
