@@ -3,7 +3,7 @@
             [jarvis.state.nodes-map :as nmap]
             [schema.core :as s]))
 
-(def schema {:nodes (s/pred #(instance? nmap/NodesMap %))
+(def schema {:nodes nmap/schema
              :active (s/maybe s/Num)
              :error (s/maybe js/Error)
              :modal (s/maybe s/Bool)

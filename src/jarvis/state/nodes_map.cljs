@@ -1,17 +1,26 @@
 (ns jarvis.state.nodes-map
   (:require [jarvis.syntax.walk :as walk]
-            [jarvis.util.logger :as util]))
+            [jarvis.util.logger :as util]
+            [schema.core :as s]))
 
 (defprotocol Stub
   (expand [this nmap])
   (empty-stub? [this]))
 
+(defn- nmap_node? [node] (or (satisfies? walk/Info node) (not (seq? node)) (every? #(satisfies? Stub %) node)))
+
+(def schema {:root (s/pred #(satisfies? Stub %))
+             :nmap {s/Int (s/pred nmap_node?)}
+             :index s/Num})
 (defrecord NodesMap [root nmap index])
 
 (defrecord StubImpl [index]
   Stub
   (expand [this nmap] (-> this :index nmap))
   (empty-stub? [this] false))
+
+(defn fresh []
+  (NodesMap. (StubImpl. 0) {0 '()} 1))
 
 (defn- with-id-info [node id]
   (if (satisfies? walk/Info node)
@@ -48,9 +57,6 @@
 
 (defn expand-node-index [nmap node-index] (expand-node (:nmap nmap) (StubImpl. node-index)))
 (defn nodes [nmap] (expand-node (:nmap nmap) (:root nmap)))
-
-(defn fresh []
-  (NodesMap. (StubImpl. 0) {0 '()} 1))
 
 (defn push-root [nmap form]
   (let [converted (convert nmap form)
