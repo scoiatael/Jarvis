@@ -13,7 +13,9 @@
 
 (def ^:private debug-connection false)
 
-(def ^:private connection-options {:port port :verbose debug-connection})
+(def ^:private connection-options {:host "127.0.0.1"
+                                   :port port
+                                   :verbose debug-connection})
 
 (defn- connect-to-server [cb]
   (reset! *connection* (.connect Client (clj->js connection-options)))
