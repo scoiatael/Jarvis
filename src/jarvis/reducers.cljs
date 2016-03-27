@@ -111,9 +111,9 @@
 ;;     (file/write fname contents #(nrepl/open! fname)))
 ;;   db)
 
-(defn push-file [_ [contents]]
+(defn push-file [db [contents]]
     (let [parsed (->> contents parser/file (map ingest-form))]
-      (let [new-db (reduce s/push-code s/empty-state parsed)]
+      (let [new-db (reduce s/push-code (s/with-empty-nodes db) parsed)]
         (check new-db)
         ;; TODO: update only suggestions for user namespace
         (start-update-suggestions new-db)

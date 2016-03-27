@@ -8,10 +8,14 @@
              :error (s/maybe js/Error)
              :modal (s/maybe s/Bool)
              :suggestions {s/Str [s/Symbol]}
-             :pasting (s/maybe s/Num)})
-(defrecord JarvisState [nodes active error modal suggestions pasting])
+             :pasting (s/maybe s/Num)
+             :nrepl-connection (s/maybe s/Bool)})
+(defrecord JarvisState [nodes active error modal suggestions pasting nrepl-connection])
 
-(def empty-state (JarvisState. (nmap/fresh) nil nil nil {} nil))
+(def empty-state (JarvisState. (nmap/fresh) nil nil nil {} nil nil))
+
+(defn with-empty-nodes [db]
+  (assoc-in db [:nodes] (:nodes empty-state)) )
 
 (defn nodes [state]
   (-> state :nodes nmap/nodes))

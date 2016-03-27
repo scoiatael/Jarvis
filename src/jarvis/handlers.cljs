@@ -37,7 +37,10 @@
   (register-handler
    :repl-connected
    middlewares
-   r/update-suggestions)
+   (fn [db ev]
+     (-> db
+         (assoc-in [:nrepl-connection] true)
+         (r/update-suggestions ev))))
 
   (register-handler
    :edit-elem-changed

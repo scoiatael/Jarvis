@@ -38,7 +38,7 @@
   (register-sub
    :status
    (fn [db _]
-     (reaction true)))
+     (reaction [(:nrepl-connection @db) (:pasting @db)])))
 
   (register-sub
    :suggestions
