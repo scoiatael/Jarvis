@@ -31,15 +31,27 @@
      :on-mouse-out (partial dont-bubble #(on-hover :out id parent-id))}))
 
 (def ^:private marked-color
-  (-> sol/green color/as-hsl (color/desaturate 75) (color/lighten 50) color/as-hex))
+  (-> sol/green
+      color/as-hsl
+      (color/desaturate 75)
+      (color/lighten 50)
+      color/as-hex))
 
 (defn- paster [o pos]
-  [rc/md-circle-icon-button
-   :attr (attrs (dissoc (into o {:id {:after pos}}) :on-hover))
-   :md-icon-name "zmdi-format-color-fill"
-   :size (or (:size o) :regular)
-   :style {:background-color marked-color
-           :color "black"}])
+  (let [attr (-> o
+                 (into {:id {:after pos}})
+                 (dissoc :on-hover)
+                 attrs
+                 (dissoc :on-mouse-over)
+                 (dissoc :on-mouse-out))
+        style {:background-color marked-color
+               :color "black"}]
+    [rc/md-icon-button
+     :attr attr
+     :md-icon-name "zmdi-format-valign-bottom"
+     :disabled? (not (:marked o))
+     ;; :size (or (:size o) :smaller)
+     :style style]))
 
 (defn- style [o color]
   (let [marked (:marked o)
@@ -76,9 +88,12 @@
    :tooltip (str errors)])
 
 (defn- code-text [o code color]
-  (let [errors (:errors o)]
+  (let [errors (:errors o)
+    hover-modifier (if (:paster o) #(dissoc % :on-mouse-out :on-mouse-over) identity)]
     [rc/box
-     :attr (attrs o)
+     :attr (-> o
+               attrs
+               hover-modifier)
      :align :center
      :style (style o color)
      :child  (if (empty? errors) code [error-text errors code])]))
