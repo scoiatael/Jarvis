@@ -69,15 +69,25 @@
       (cb true)
       (var-defined? (:root this) var cb))))
 
+(defn- arguments-or-error [value pos]
+  (let [arg-array (nth value pos :not-found)]
+    (if (= arg-array :not-found)
+      {:error :not-found}
+      (if (vector? arg-array)
+        {:arguments (-> arg-array walk/value walk/strip)}
+        {:error :not-an-array}))))
+
 (defn- scope-of-let [root-scope value]
-  (LetScope. root-scope (-> value (nth 1) walk/value)))
+  (if-let [arguments (:arguments (arguments-or-error value 1))]
+    (LetScope. root-scope arguments)))
 
 (defn- scope-of-defn [root-scope value]
-  (let [arguments (-> value (nth 2) walk/value walk/strip)]
+  (if-let [arguments (:arguments (arguments-or-error value 2))]
     (FnScope. root-scope arguments)))
 
 (defn- scope-of-fn [root-scope value]
-  (FnScope.  root-scope (-> value (nth 1) walk/value walk/strip)))
+  (if-let [arguments (:arguments (arguments-or-error value 1))]
+    (FnScope. root-scope arguments)))
 
 (defn- scope [root-scope code]
   (let [type (-> code walk/info :type)
@@ -92,7 +102,8 @@
 
 (defn- annotate-scope [root-scope code]
   (if (satisfies? walk/Info code)
-    (let [scope (scope root-scope code)
+    (let [maybe-scope (scope root-scope code)
+          scope (if (nil? maybe-scope) root-scope maybe-scope)
           scoped-code (walk/with-info code {:scope scope})]
       (walk/walk #(annotate-scope scope %) identity scoped-code))
     (walk/walk #(annotate-scope root-scope %) identity code)))
