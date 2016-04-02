@@ -48,6 +48,11 @@
    r/modal->code)
 
   (register-handler
+   :add-elem-clicked
+   middlewares
+   r/modal->code)
+
+  (register-handler
    :node-clicked
    middlewares
    r/node-paste-or-cut)
