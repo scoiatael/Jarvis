@@ -3,7 +3,7 @@
             [jarvis.state.nodes-map.core :as nmap]
             [schema.core :as s]))
 
-(def schema {:nodes nmap/schema
+(def schema {:nodes (nmap/schema :file :snips :tmp)
              :suggestions {s/Str [s/Symbol]}
              (s/optional-key :active) (s/maybe s/Num)
              (s/optional-key :error) (s/maybe js/Error)

@@ -19,7 +19,7 @@
         index-atom (atom first-index)
         map-atom (atom (:nmap nmap))
         flat-form (flatten! index-atom map-atom form)]
-    (-> nmap
-        (update-in [:root] (constantly (StubImpl. first-index)))
-        (update-in [:index] (constantly @index-atom))
-        (update-in [:nmap] (constantly @map-atom)))))
+    [first-index
+     (-> nmap
+         (update-in [:index] (constantly @index-atom))
+         (update-in [:nmap] (constantly @map-atom)))]))

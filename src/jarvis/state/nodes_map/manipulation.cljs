@@ -3,24 +3,13 @@
             [jarvis.state.nodes-map.conversion :refer [convert]]
             [jarvis.state.nodes-map.datatype :refer [expand Stub StubImpl]]))
 
-(defn push-root [nmap form]
-  (let [converted (convert nmap form)
-        new-root (:root converted)
-        old-root (:root nmap)]
+(defn push-to-roots [nmap sym form]
+  (let [[index converted] (convert nmap form)]
     (-> converted
-        (update-in [:root] (constantly old-root))
-        (update-in [:nmap (:index old-root)] #(conj (into [] %) new-root)))))
+        (update-in [:roots] #(conj % sym index)))))
 
-(defn replace-node [pos node list]
+(defn- replace-node [pos node list]
   (map #(if (= (:index %) pos) node %) list))
-
-(defn swap-at-root [nmap index form]
-  (let [converted (convert nmap form)
-        new-root (:root converted)
-        old-root (:root nmap)]
-    (-> converted
-        (update-in [:root] (constantly old-root))
-        (update-in [:nmap (:index old-root)] #(replace-node index new-root (into [] %))))))
 
 (defn update-node [nmap node-id update]
   (update-in nmap [:nmap node-id] update))

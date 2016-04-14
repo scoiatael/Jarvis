@@ -3,8 +3,7 @@
             [schema.core :as s]))
 
 (defprotocol Stub
-  (expand [this nmap])
-  (empty-stub? [this]))
+  (expand [this nmap]))
 
 (defn- nmap_node? [node]
   (if (satisfies? walk/Info node)
@@ -13,19 +12,18 @@
       (every? #(satisfies? Stub %) node)
       (not (seqable? node)))))
 
-(def schema {:root (s/pred #(satisfies? Stub %))
-             :nmap {s/Int (s/pred nmap_node?)}
-             :index s/Num})
+(defn schema [& roots-keys]
+  {:roots (into {} (map #(vector (s/optional-key %) s/Int) roots-keys))
+   :nmap {s/Int (s/pred nmap_node?)}
+   :index s/Num})
 
-(defrecord NodesMap [root nmap index])
+(def fresh {:roots {}
+            :nmap {}
+            :index 0})
 
 (defrecord StubImpl [index]
   Stub
-  (expand [this nmap] (-> this :index nmap))
-  (empty-stub? [this] false))
-
-(def fresh
-  (NodesMap. (StubImpl. 0) {0 '()} 1))
+  (expand [this nmap] (-> this :index nmap)))
 
 (defn- with-id-info [node id]
   (if (satisfies? walk/Info node)
@@ -38,5 +36,5 @@
                    node)]
     (walk/walk (partial expand-node nmap) identity expanded)))
 
-(defn expand-node-index [nmap node-index] (expand-node (:nmap nmap) (StubImpl. node-index)))
-(defn nodes [nmap] (expand-node (:nmap nmap) (:root nmap)))
+(defn expand-node-index [nmap node-index]
+  (expand-node (:nmap nmap) (StubImpl. node-index)))

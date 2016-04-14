@@ -5,11 +5,10 @@
 (def schema dt/schema)
 (def fresh dt/fresh)
 
-(def expand-node-index dt/expand-node-index)
-(def nodes dt/nodes)
+(def expand-node dt/expand-node-index)
 
-(def push-root mp/push-root)
-(def swap-at-root mp/swap-at-root)
+(def push-root mp/push-to-roots)
+
 (def update-node mp/update-node)
 (def remove-node mp/remove-node)
 (def paste-node mp/paste-node)
