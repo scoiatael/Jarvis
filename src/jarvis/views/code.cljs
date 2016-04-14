@@ -27,8 +27,15 @@
    :style {:max-width "100%"}
    :children (map-indexed (fn [index item] [code pasting? item index]) codes)])
 
+(defn- code-boxes [pasting? codes]
+  [v-box
+   :gap "1em"
+   :children [[code-list pasting? codes]
+              [rc/line]
+              [code-list pasting? codes]]])
+
 (defn render []
   (let [pasting? (subscribe [:pasting?])
         codes (subscribe [:codes])]
     (fn []
-      [code-list @pasting? @codes])))
+      [code-boxes @pasting? @codes])))

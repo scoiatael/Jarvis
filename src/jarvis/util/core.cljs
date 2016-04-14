@@ -6,3 +6,11 @@
 
 (def error! logger/error!)
 (def log! logger/log!)
+
+(defn- update-field [struct tuple]
+  (let [field (first tuple)
+        fun (last tuple)]
+    (update-in struct field fun)))
+
+(defn update-fields [state field fun & args]
+  (reduce update-field state (conj (partition 2 args) [field fun])))

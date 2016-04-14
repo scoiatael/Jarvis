@@ -4,12 +4,6 @@
             [jarvis.state.core :as s]))
 
 (defn register! []
-  (register-sub
-   :can-remove?
-   (fn [db _]
-     (reaction (if (:nodes @db)
-                 (> (s/nodes-length @db) 0)
-                 false))))
 
   (register-sub
    :can-undo?

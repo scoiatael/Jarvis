@@ -96,11 +96,6 @@
    r/open-file)
 
   (register-handler
-   :icon-minus-clicked
-   middlewares
-   r/pop-code)
-
-  (register-handler
    :namespace-function-clicked
    middlewares
    r/push-namespaced-fn)

@@ -93,9 +93,6 @@
 (defn push-namespaced-fn [db [ns fn]]
   (push-code db (str ns "/" fn)))
 
-(defn pop-code [db _]
-  (s/pop-code db))
-
 (def ^:private tmp-file "examples/file1.clj")
 
 (defn open-file [db [fname]]

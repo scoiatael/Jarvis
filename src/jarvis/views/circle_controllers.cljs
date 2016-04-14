@@ -21,18 +21,11 @@
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-file-text"
-                 :on-click #(dispatch [:icon-file-clicked])]
-
-                [rc/md-circle-icon-button
-                 :md-icon-name "zmdi-minus"
-                 :on-click #(dispatch [:icon-minus-clicked])
-                 :disabled? (disabled? :minus)]]]))
+                 :on-click #(dispatch [:icon-file-clicked])]]]))
 
 (defn render []
   (let [pasting? (subscribe [:pasting?])
-        can-remove? (subscribe [:can-remove?])
         can-undo? (subscribe [:can-undo?])]
     (fn []
       [circle-controllers {:delete @pasting?
-                           :undo @can-undo?
-                           :minus @can-remove?}])))
+                           :undo @can-undo?}])))
