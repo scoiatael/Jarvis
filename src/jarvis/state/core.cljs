@@ -17,11 +17,12 @@
 (defn with-empty-nodes [db]
   (assoc-in db [:nodes] (:nodes empty-state)) )
 
+;; TODO: Use (expand-node (:nodes state) (-> state :nodes :roots :file))
 (defn nodes [state]
   (-> state :nodes nmap/nodes))
 
 (defn code [state index]
-  (nmap/expand-node-index (:nodes state) index))
+  (nmap/expand-node (:nodes state) index))
 
 (def update-fields util/update-fields)
 
@@ -31,6 +32,7 @@
                   [:nodes] #(nmap/push-root % code)))
   ([state index code]
    (update-fields state
+                  ;; TODO: modify :file array
                   [:nodes] #(nmap/swap-at-root % index code))))
 
 (defn update-node [state node-id update]
