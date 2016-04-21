@@ -9,7 +9,7 @@
 
 (defonce ^:private *introspect* (atom false))
 
-(defn- code [pasting? item index]
+(defn- code [id pasting? item index]
   (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)]
     [rc/border
      :border (str "1px dashed " "transparent")
@@ -17,22 +17,22 @@
              {:on-click #(dispatch [:node-clicked %1 %2])
               :path []
               :paster pasting?
-              :id 0 ;; FIXME: nodes_map root... ugly constant.
+              :id id
               :on-hover #(dispatch [:node-hover %1 %2])}
              item-to-show]]))
 
-(defn- code-list [pasting? codes]
+(defn- code-list [id pasting? codes]
   [v-box
    :align :start
    :style {:max-width "100%"}
-   :children (map-indexed (fn [index item] [code pasting? item index]) codes)])
+   :children (map-indexed (fn [index item] [code id pasting? item index]) codes)])
 
 (defn- code-boxes [pasting? defs scratch]
   [v-box
    :gap "1em"
-   :children [[code-list pasting? defs]
+   :children [[code-list :defs pasting? defs]
               [rc/line]
-              [code-list pasting? scratch]]])
+              [code-list :scratch pasting? scratch]]])
 
 (defn render []
   (let [pasting? (subscribe [:pasting?])
