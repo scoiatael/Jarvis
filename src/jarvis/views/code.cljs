@@ -39,4 +39,4 @@
         defs (subscribe [:defs])
         scratch (subscribe [:scratch])]
     (fn []
-      [code-boxes @pasting? @defs @scratch])))
+      [code-boxes @pasting? (reverse @defs) (reverse @scratch)])))

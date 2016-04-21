@@ -44,7 +44,7 @@
   (let [name (first this)]
       (if (satisfies? walk/Info name)
         (walk/value name)
-        nil)))
+        name)))
 
 (defrecord LetScope [root bindings]
   Scope
@@ -52,28 +52,35 @@
     (let [fn-def (->> this bindings-let (filter #(= fn-name (list->fn-name %))) first last)]
       (if (nil? fn-def)
         (fn-arity (:root this) fn-name cb)
-        (-> fn-def walk/info :fn-arity cb))))
+        (-> fn-def walk/info :fn-arity cb)
+        )))
   (var-defined? [this var cb]
     (if (-> (->> this bindings-let (map list->fn-name)) (list-contains? var))
       (cb true)
-      (var-defined? (:root this) var cb))))
+      (do 
+        ;; (util/error! var "not found in" this (->> this bindings-let (map list->fn-name)))
+        (var-defined? (:root this) var cb)))))
 
 (defrecord FnScope [root arguments]
   Scope
   (fn-arity [this fn-name cb]
-    (if (list-contains? (:arguments this) fn-name)
+    (if (list-contains? (-> this :arguments walk/strip) fn-name)
       (cb :any)
-      (fn-arity (:root this) fn-name cb)))
+      (do
+        ;; (util/error! fn-name "not found in" this)
+        (fn-arity (:root this) fn-name cb))))
   (var-defined? [this var cb]
-    (if (list-contains? (:arguments this) var)
+    (if (list-contains? (-> this :arguments walk/strip) var)
       (cb true)
-      (var-defined? (:root this) var cb))))
+      (do
+        ;; (util/error! var "not found in" this)
+        (var-defined? (:root this) var cb)))))
 
 (defn- arguments-or-error [value pos]
   (let [arg-array (nth value pos :not-found)]
     (if (= arg-array :not-found)
       (util/error! value pos {:error :not-found})
-      (if-let [args (-> arg-array walk/value walk/strip)]
+      (if-let [args (-> arg-array walk/value)]
         {:arguments args}
         (util/error! value pos arg-array {:error :not-an-array})))))
 
