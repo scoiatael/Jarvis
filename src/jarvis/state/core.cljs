@@ -3,7 +3,7 @@
             [jarvis.state.nodes-map.core :as nmap]
             [schema.core :as s]))
 
-(def schema {:nodes (nmap/schema :file :snips :tmp)
+(def schema {:nodes nmap/schema
              :suggestions {s/Str [s/Symbol]}
              (s/optional-key :active) (s/maybe s/Num)
              (s/optional-key :error) (s/maybe js/Error)
@@ -11,29 +11,37 @@
              (s/optional-key :pasting) (s/maybe s/Num)
              (s/optional-key :nrepl-connection) (s/maybe s/Bool)})
 
-(def empty-state {:nodes nmap/fresh
+(def ^:constant roots #{:defs :scratch})
+
+(def empty-state {:nodes (reduce #(assoc-in %1 [:nmap %2] '()) nmap/fresh roots)
                   :suggestions {}})
 
 (defn with-empty-nodes [db]
   (assoc-in db [:nodes] (:nodes empty-state)) )
 
-;; TODO: Use (expand-node (:nodes state) (-> state :nodes :roots :file))
-(defn nodes [state]
-  (-> state :nodes nmap/nodes))
+(defn- nodes [state root]
+  {:pre (roots root)}
+  (let [nm (:nodes state)]
+    (nmap/expand-node nm root)))
+
+(defn defs [state]
+  (nodes state :defs))
+
+(defn scratch [state]
+  (nodes state :scratch))
 
 (defn code [state index]
   (nmap/expand-node (:nodes state) index))
 
-(def update-fields util/update-fields)
+(def ^:private update-fields util/update-fields)
 
-(defn push-code
-  ([state code]
-   (update-fields state
-                  [:nodes] #(nmap/push-root % code)))
-  ([state index code]
-   (update-fields state
-                  ;; TODO: modify :file array
-                  [:nodes] #(nmap/swap-at-root % index code))))
+(defn push-code [state root code]
+  {:pre (roots root)}
+  (update-in state
+             [:nodes] (fn [nm]
+                        (let [[index converted] (nmap/convert nm code)]
+                          (update-in converted
+                                     [:nmap root] #(conj % index))))))
 
 (defn update-node [state node-id update]
   (update-in state [:nodes] #(nmap/update-node % node-id update)))

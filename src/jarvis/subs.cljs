@@ -15,9 +15,14 @@
      (reaction (:pasting @db))))
 
   (register-sub
-   :codes
+   :defs
    (fn [db _]
-     (reaction (s/nodes @db))))
+     (reaction (s/defs @db))))
+
+  (register-sub
+   :scratch
+   (fn [db _]
+     (reaction (s/scratch @db))))
 
   (register-sub
    :error

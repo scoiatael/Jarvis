@@ -2,20 +2,23 @@
   (:require [jarvis.syntax.walk :as walk]
             [jarvis.state.nodes-map.datatype :refer [expand Stub StubImpl]]))
 
-(defn- all-indexes! [nmap list-atom node]
+(defn- all-indices! [nmap list-atom node]
   (when (satisfies? Stub node)
     (swap! list-atom #(conj % node))
-    (walk/walk (partial all-indexes! nmap list-atom) identity (expand node (:nmap nmap)))))
+    (walk/walk (partial all-indices! nmap list-atom) identity (expand node (:nmap nmap)))))
 
-(defn- all-indexes [nmap]
+(defn- all-indices [nmap]
   (let [list-atom (atom #{})
-        nodes (:roots nmap)]
+        nodes (->> nmap :nodes (filter #(keyword? (first %))) (map second))]
     (map
-     #(all-indexes! nmap list-atom (second %))
+     #(all-indices! nmap list-atom (second %))
      nodes)
     (into #{} (map :index (flatten @list-atom)))))
 
 (defn clean-garbage [nmap]
-  (let [valid-indexes (all-indexes nmap)]
+  (let [valid-indices(all-indices nmap)
+        valid-index? #(or (contains? valid-indices %) (keyword? %))]
     (-> nmap
-        (update-in [:nmap] (fn [nmap] (into {} (filter #(contains? valid-indexes (first %)) nmap)))))))
+        (update-in [:nmap] (fn [nmap] (->> nmap
+                                          (filter #(valid-index? (first %)))
+                                          (into {})))))))

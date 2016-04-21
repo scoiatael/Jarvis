@@ -1,5 +1,6 @@
 (ns jarvis.state.nodes-map.core
   (:require [jarvis.state.nodes-map.datatype :as dt]
+            [jarvis.state.nodes-map.conversion :as cv]
             [jarvis.state.nodes-map.manipulation :as mp]))
 
 (def schema dt/schema)
@@ -7,7 +8,8 @@
 
 (def expand-node dt/expand-node-index)
 
-(def push-root mp/push-to-roots)
+(def insert-as cv/insert-as)
+(def convert cv/convert)
 
 (def update-node mp/update-node)
 (def remove-node mp/remove-node)

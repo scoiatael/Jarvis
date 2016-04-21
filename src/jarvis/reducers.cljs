@@ -21,7 +21,7 @@
   (t/check #(dispatch [:add-error %1 %2]) code))
 
 (defn- check [db]
-  (doseq [node (s/nodes db)]
+  (doseq [node (s/defs db)]
     (check-code node)))
 
 (defn- start-update-suggestions [db]
@@ -36,15 +36,7 @@
         error (:error parsed)
         form (:form parsed)]
     (if (nil? error)
-      (do
-        ;; TODO: ensure eval finished before check? show error?
-        (nrepl/eval! form)
-        (let [new-db (s/push-code db (ingest-form form))]
-          ;; TODO: check only new code
-          (check new-db)
-          ;; TODO: update only suggestions for user namspace
-          (start-update-suggestions new-db)
-          new-db))
+      (s/push-code db :scratch (ingest-form form))
       (set-error db error))))
 
 (defn- set-modal [db value]
@@ -110,7 +102,7 @@
 
 (defn push-file [db [contents]]
     (let [parsed (->> contents parser/file (map ingest-form))]
-      (let [new-db (reduce s/push-code (s/with-empty-nodes db) parsed)]
+      (let [new-db (reduce #(s/push-code %1 :defs %2) (s/with-empty-nodes db) parsed)]
         (check new-db)
         ;; TODO: update only suggestions for user namespace
         (start-update-suggestions new-db)

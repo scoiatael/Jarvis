@@ -14,12 +14,18 @@
     (walk/walk (partial flatten! index-atom map-atom) bind-this form)
     (StubImpl. this-index)))
 
-(defn- convert [nmap form]
+(defn convert [nmap form]
   (let [first-index (:index nmap)
         index-atom (atom first-index)
         map-atom (atom (:nmap nmap))
         flat-form (flatten! index-atom map-atom form)]
-    [first-index
+    [(StubImpl. first-index)
      (-> nmap
          (update-in [:index] (constantly @index-atom))
          (update-in [:nmap] (constantly @map-atom)))]))
+
+(defn insert-as [nmap sym form]
+  {:pre (keyword? sym)}
+  (let [[index converted] (convert nmap form)]
+    (-> converted
+        (assoc-in [:nmap sym] index))))

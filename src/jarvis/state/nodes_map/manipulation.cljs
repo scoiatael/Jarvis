@@ -1,12 +1,6 @@
 (ns jarvis.state.nodes-map.manipulation
   (:require [jarvis.syntax.walk :as walk]
-            [jarvis.state.nodes-map.conversion :refer [convert]]
             [jarvis.state.nodes-map.datatype :refer [expand Stub StubImpl]]))
-
-(defn push-to-roots [nmap sym form]
-  (let [[index converted] (convert nmap form)]
-    (-> converted
-        (update-in [:roots] #(conj % sym index)))))
 
 (defn- replace-node [pos node list]
   (map #(if (= (:index %) pos) node %) list))
