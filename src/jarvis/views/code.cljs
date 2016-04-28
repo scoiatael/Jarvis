@@ -5,6 +5,7 @@
             [jarvis.syntax.core :as sc]
             [jarvis.syntax.walk :as walk]
             [jarvis.views.components.code_boxes :as r]
+            [jarvis.views.components.paster :as past]
             [jarvis.util.core :as util]))
 
 (defonce ^:private *introspect* (atom false))
@@ -29,13 +30,20 @@
    :style {:max-width "100%"}
    :children (map-indexed (fn [index item] [code h item index]) codes)])
 
+(defn- paster-for [id]
+  [past/big
+   :on-click #(dispatch [:paster-clicked-for id])
+   :tooltip (str "Add node to " id)])
+
 (defn- code-boxes [pasting? defs scratch]
   (let [h {:pasting pasting?}]
     [v-box
      :gap "1em"
      :children [[code-list (assoc h :id :defs :pasting false) defs]
+                (if pasting? [paster-for :defs])
                 [rc/line]
-                [code-list (assoc h :id :scratch) scratch]]]))
+                [code-list (assoc h :id :scratch) scratch]
+                (if pasting? [paster-for :scratch])]]))
 
 (defn render []
   (let [pasting? (subscribe [:pasting?])

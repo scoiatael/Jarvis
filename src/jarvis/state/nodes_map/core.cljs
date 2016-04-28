@@ -10,6 +10,7 @@
 
 (def insert-as cv/insert-as)
 (def convert cv/convert)
+(def wrap-id cv/wrap-id)
 
 (def update-node mp/update-node)
 (def remove-node mp/remove-node)

@@ -58,8 +58,13 @@
    r/node-paste-or-cut)
 
   (register-handler
-   :node-hover
+   :paster-clicked-for
    middlewares
+   r/add-root-node)
+
+  (register-handler
+   :node-hover
+   r-f/trim-v
    (fn [db [ev node]]
      (case ev
        :over (r/mark-node db [node])

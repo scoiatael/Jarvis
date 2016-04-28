@@ -5,7 +5,8 @@
             [jarvis.views.colors.solarized :as sol]
             [jarvis.syntax.walk :as walk]
             [jarvis.views.font :as font]
-            [jarvis.util.core :as util]))
+            [jarvis.util.core :as util]
+            [jarvis.views.components.paster :as past]))
 
 (defn- render-errors [errors]
   (let [has-errors? (not (empty? errors))]
@@ -46,11 +47,9 @@
                  (dissoc :on-mouse-out))
         style {:background-color marked-color
                :color "black"}]
-    [rc/md-icon-button
+    [past/small
      :attr attr
-     :md-icon-name "zmdi-format-valign-bottom"
      :disabled? (not (:marked o))
-     ;; :size (or (:size o) :smaller)
      :style style]))
 
 (defn- style [o color]

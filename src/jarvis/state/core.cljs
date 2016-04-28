@@ -35,13 +35,26 @@
 
 (def ^:private update-fields util/update-fields)
 
+(defn push-node [state root node]
+  {:pre [(roots root)]}
+  (update-in state
+             [:nodes :nmap root]
+             #(conj % (nmap/wrap-id node))))
+
 (defn push-code [state root code]
-  {:pre (roots root)}
+  {:pre [(roots root)]}
   (update-in state
              [:nodes] (fn [nm]
                         (let [[index converted] (nmap/convert nm code)]
                           (update-in converted
                                      [:nmap root] #(conj % index))))))
+(defn inject-code [state old-index code]
+  (update-in state
+             [:nodes] (fn [nm]
+                        (let [[index converted] (nmap/convert nm code)
+                              map-index (:index index)]
+                          (update-in converted
+                                     [:nmap] #(clojure.set/rename-keys % {map-index old-index}))))))
 
 (defn update-node [state node-id update]
   (update-in state [:nodes] #(nmap/update-node % node-id update)))

@@ -45,7 +45,7 @@
 (defn- recheck [db node]
   (let [to-check node
         code-to-check (->> to-check (s/code db) t/strip)]
-    (let [new-db (s/push-code db to-check (ingest-form code-to-check))]
+    (let [new-db (s/inject-code db to-check (ingest-form code-to-check))]
       (check new-db)
       new-db)))
 
@@ -131,3 +131,10 @@
 (defn update-suggestions [db _]
   (start-update-suggestions db)
   db)
+
+(defn add-root-node [db [id]]
+  (let [node (:pasting db)]
+    (-> db
+        (s/push-node id node)
+        (recheck node)
+        (set-pasting nil))))
