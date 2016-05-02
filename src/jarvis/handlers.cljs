@@ -118,6 +118,11 @@
    r/set-node-error)
 
   (register-handler
+   :add-eval-info
+   middlewares
+   r/set-node-eval-info)
+
+  (register-handler
    :push-file
    middlewares
    r/push-file)

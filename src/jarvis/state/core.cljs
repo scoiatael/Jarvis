@@ -48,6 +48,7 @@
                         (let [[index converted] (nmap/convert nm code)]
                           (update-in converted
                                      [:nmap root] #(conj % index))))))
+
 (defn inject-code [state old-index code]
   (update-in state
              [:nodes] (fn [nm]

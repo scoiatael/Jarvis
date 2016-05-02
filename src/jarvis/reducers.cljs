@@ -6,6 +6,7 @@
             [jarvis.util.file :as file]
             [jarvis.util.nrepl :as nrepl]
             [jarvis.util.logger :as util]
+            [jarvis.util.promise :as p]
             [jarvis.state.core :as s]))
 
 
@@ -19,10 +20,6 @@
 
 (defn- check-code [code]
   (t/check #(dispatch [:add-error %1 %2]) code))
-
-(defn- check [db]
-  (doseq [node (s/defs db)]
-    (check-code node)))
 
 (defn- start-update-suggestions [db]
   (doseq [ns ["user" "clojure.core"]]
@@ -42,27 +39,31 @@
 (defn- set-modal [db value]
   (s/update-fields db [:modal] (constantly value)))
 
-(defn- recheck [db node]
+(defn- clear-node [db node]
   (let [to-check node
         code-to-check (->> to-check (s/code db) t/strip)]
     (let [new-db (s/inject-code db to-check (ingest-form code-to-check))]
-      (check new-db)
       new-db)))
 
-(defn- recheck-path [db path]
-  (if (> (count path) 1)
-    ;; We cut part of node, need to recheck
-    (recheck db (nth path 1))
-    db))
+(defn- add-eval-info [code info]
+  (let [id (-> code walk/info :id)]
+    (util/log! "Info for " (-> code t/strip str) info id)
+    (dispatch [:add-eval-info id info])))
+
+(defn- eval-node [db node]
+  (let [code (s/code db node)
+        stripped (t/strip code)]
+    (p/then (nrepl/eval! stripped)
+            #(add-eval-info code %)
+            #(check-code code)))
+  db)
 
 (defn- paste-node [db node-id path]
   (-> (s/paste-node db path node-id (:pasting db))
-      (recheck-path path)
       (set-pasting nil)))
 
 (defn- cut-node [db node-id path]
   (-> (s/remove-node db path node-id)
-      (recheck-path path)
       (set-pasting node-id)))
 
 (defn- unmark [db id]
@@ -91,7 +92,7 @@
   (let [fname tmp-file]
     (file/open fname (fn [contents]
                        ;; TODO: ensure eval finished before check? show error?
-                       (nrepl/open! fname)
+                       ;; (nrepl/open! fname)
                        (dispatch [:push-file contents]))))
   db)
 
@@ -102,14 +103,17 @@
 
 (defn push-file [db [contents]]
     (let [parsed (->> contents parser/file (map ingest-form))]
-      (let [new-db (reduce #(s/push-code %1 :defs %2) (s/with-empty-nodes db) parsed)]
-        (check new-db)
+      ;; TODO: Push to defs?
+      (let [new-db (reduce #(s/push-code %1 :scratch %2) (s/with-empty-nodes db) parsed)]
         ;; TODO: update only suggestions for user namespace
         (start-update-suggestions new-db)
         new-db)))
 
 (defn set-node-error [db [id err]]
   (s/update-node db id #(walk/with-err % err))) 
+
+(defn set-node-eval-info [db [id info]]
+  (s/update-node db id #(walk/with-info % {:eval info}))) 
 
 (defn add-namespace-functions [db [ns ns-funs]]
   (s/update-suggestions db {ns ns-funs}))
@@ -133,8 +137,10 @@
   db)
 
 (defn add-root-node [db [id]]
-  (let [node (:pasting db)]
+  (let [node (:pasting db)
+        process-node (if (= id :defs) (fn [db] (eval-node db node)) identity)]
     (-> db
         (s/push-node id node)
-        (recheck node)
+        (clear-node node)
+        process-node
         (set-pasting nil))))
