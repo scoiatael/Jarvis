@@ -10,6 +10,24 @@
 
 (defonce ^:private *introspect* (atom false))
 
+(defn- def-clicked [elem path]
+  (let [[elem path] (if (< 1 (count path))
+                      [(nth path 1) [(first path)]]
+                      [elem path])]
+    (dispatch [:node-clicked elem path])))
+
+(defn- scratch-clicked [elem path]
+  (dispatch [:node-clicked elem path]))
+
+(defn- def-hover [type elem path]
+  (let [elem (if (< 1 (count path))
+               (nth path 1)
+               elem)]
+    (dispatch [:node-hover type elem])))
+
+(defn- scratch-hover [type elem]
+  (dispatch [:node-hover type elem]))
+
 (defn- code [h item index]
   (let [id (:id h)
         pasting? (:pasting h)]
@@ -17,11 +35,11 @@
       [rc/border
        :border (str "1px dashed " "transparent")
        :child [r/render
-               {:on-click #(dispatch [:node-clicked %1 %2])
+               {:on-click (:on-click h)
                 :path []
                 :paster pasting?
                 :id id
-                :on-hover #(dispatch [:node-hover %1 %2])}
+                :on-hover (:on-hover h)}
                item-to-show]])))
 
 (defn- code-list [h codes]
@@ -39,10 +57,17 @@
   (let [h {:pasting pasting?}]
     [v-box
      :gap "1em"
-     :children [[code-list (assoc h :id :defs :pasting false) defs]
+     :children [[code-list (assoc h
+                                  :id :defs
+                                  :pasting false
+                                  :on-click def-clicked
+                                  :on-hover def-hover) defs]
                 (if pasting? [paster-for :defs])
                 [rc/line]
-                [code-list (assoc h :id :scratch) scratch]
+                [code-list (assoc h
+                                  :id :scratch
+                                  :on-click scratch-clicked
+                                  :on-hover scratch-hover) scratch]
                 (if pasting? [paster-for :scratch])]]))
 
 (defn render []
