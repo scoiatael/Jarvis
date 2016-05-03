@@ -9,3 +9,5 @@
 (let [f (fn [a b] (+ a b))] (f))
 
 (hash-map 1 2 3 4 5 6)
+
+(map println ["foo" "bar" "baz"])

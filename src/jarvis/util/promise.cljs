@@ -3,7 +3,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defn then [p & fns]
-  (let [apply-fns (fn [v] (.log js/console "Done." v)
+  (let [apply-fns (fn [v]
                     (doseq [f fns]
                       (f v)))]
     (go (-> p

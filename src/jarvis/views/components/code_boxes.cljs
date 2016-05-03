@@ -169,7 +169,6 @@
               c)))
 
 (defn- render-map [o k]
-  ;; (util/log! k)
   (let [par (partition 2 k)
         sorted (sort-by #(-> % first walk/info :id) par)
         children (->> sorted
@@ -187,23 +186,51 @@
   (util/error! "Unknown value" k " of " t)
   (code-box o (str k) (type->color :misc)))
 
+(defn- render-stdout [out]
+  [rc/v-box
+   :children (map (fn [line] [rc/box
+                             :style {:background-color sol/base02
+                                     :padding-left "1em"
+                                     :color sol/base2}
+                             :child (str line)]) out)])
+
+(defn- render-ex [ex]
+  [rc/box
+   :style {:background-color sol/red}
+   :child (str ex)])
+
+(defn- render-val [val]
+  [rc/box
+   :child (str val)])
+
+(defn- render-info [info component]
+  [rc/v-box
+   :children [component
+              [render-stdout (:out info)]
+              [render-ex (:ex info)]
+              [render-val (:val info)]]])
+
 (defn render [o code]
-  {:pre (walk/is-info? code)}
+  {:pre [(walk/is-info? code)]}
   (let [value (walk/value code)
         info (walk/info code)
         type (:type info)
         errors (info :errors)
         id (:id info)
-        opts (conj (push-id o (:id o)) info)]
-    (case type
-      :bool (render-keyword opts value)
-      :nil (render-nil opts value)
-      :vector [render-vector opts value]
-      :keyword [render-keyword opts value]
-      :symbol [render-symbol opts value]
-      :number [render-number opts value]
-      :string [render-string opts value]
-      :list [render-list opts value]
-      :map [render-map opts value]
-      nil [render-nil opts value]
-      [render-misc opts value type])))
+        opts (conj (push-id o (:id o)) info)
+        eval-info (:eval info)
+        component (case type
+                    :bool (render-keyword opts value)
+                    :nil (render-nil opts value)
+                    :vector [render-vector opts value]
+                    :keyword [render-keyword opts value]
+                    :symbol [render-symbol opts value]
+                    :number [render-number opts value]
+                    :string [render-string opts value]
+                    :list [render-list opts value]
+                    :map [render-map opts value]
+                    nil [render-nil opts value]
+                    [render-misc opts value type])]
+    (if (nil? eval-info)
+      component
+      [render-info eval-info component])))

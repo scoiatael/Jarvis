@@ -47,7 +47,6 @@
 
 (defn- add-eval-info [code info]
   (let [id (-> code walk/info :id)]
-    (util/log! "Info for " (-> code t/strip str) info id)
     (dispatch [:add-eval-info id info])))
 
 (defn- eval-node [db node]
