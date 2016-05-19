@@ -10,15 +10,12 @@
 
 (def BrowserWindow (.-BrowserWindow electron))
 
-;; (def crash-reporter (.-crashReporter electron))
-
 (def app (.-app electron))
 
 (def *win* (atom nil))
 
 (defn -main []
   (util/log! "Starting up..")
-  ;; (.start crash-reporter)
 
   (.on ipc/main "start-server"
        (fn [ev arg]
@@ -32,7 +29,7 @@
 
   ;; error listener
   (.on nodejs/process "error"
-    (fn [err] (.log js/console err)))
+    (fn [err] (.error js/console err)))
 
   ; window all closed listener
    (.on app "window-all-closed"

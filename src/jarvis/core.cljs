@@ -22,16 +22,14 @@
 (enable-console-print!)
 
 (defn mount-root []
+  (subs/register!)
+  (handlers/register!)
+
   (reagent/render [app/main]
                   (.getElementById js/document "app")))
 
-(defn init! []
-  (goog.style/installStyles (app/styles))
-
-  (r-f/dispatch [:initialise-db])
-
-  (subs/register!)
-  (handlers/register!)
+(defn ^:export init []
+  (goog.style/installStyles app/styles)
 
   (.once ipc/renderer "server-started"
          (fn [srv] (nrepl/connect-to-server
@@ -39,9 +37,6 @@
                      (util/log! "Connected to nREPL")
                      (r-f/dispatch [:repl-connected])))))
 
-  (util/log! "Requesting nREPL start..")
+  (mount-root)
   (ipc/start-server! {})
-
-  (mount-root))
-
-(init!)
+  (r-f/dispatch-sync [:initialise-db]))

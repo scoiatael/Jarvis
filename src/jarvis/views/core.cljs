@@ -35,7 +35,7 @@
               [modal/render]
               [error/render]]])
 
-(defn styles []
+(def styles
   (css [:body
         {:font-family font/main
          :font-size "medium"

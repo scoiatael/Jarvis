@@ -1,12 +1,13 @@
 (defproject jarvis "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "Visual Programming Environment for Clojure"
+  :url "http://github.com/scoiatael/Jarvis"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.8.34" :exclusions [org.apache.ant/ant]]
+                 [org.clojure/clojurescript "1.8.34"]
                  [org.clojure/core.async "0.2.374"]
-                 [re-com "0.8.0"]
+                 [re-com "0.8.3"]
                  [historian "1.1.0"]
                  [re-frame "0.7.0"]
                  [figwheel "0.5.0-6"]
@@ -15,78 +16,49 @@
                  [org.clojure/tools.reader "1.0.0-alpha1"]
                  [garden "1.3.2"]
                  [ring/ring-core "1.4.0"]]
+
+  :min-lein-version "2.5.3"
+
   :plugins [[lein-cljsbuild "1.1.2"]
-            [lein-externs "0.1.3"]
-            [lein-figwheel "0.5.0"]]
-  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
-                                  [org.clojure/tools.nrepl "0.2.12"]]
-                   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}}
-  :source-paths ["tools/server"]
-  :aliases {"npm-deps" ["trampoline" "shell" "npm" "install"]
-            "startapp" ["trampoline" "shell" "npm" "start"]}
-  :clean-targets [:target-path "app/js/out" "app/js/renderer.js" "app/js/front.js"]
-  :cljsbuild {:builds
-              {:renderer {:id "renderer"
-                      :source-paths ["tools"]
-                      :incremental true
-                      :jar true
-                      :assert true
-                      :compiler {:output-to "app/js/renderer.js"
-                                 :externs ["app/js/externs.js"
-                                           "node_modules/closurecompiler-externs/path.js"
-                                           "node_modules/closurecompiler-externs/process.js"]
-                                 :main "app.core"
-                                 :warnings true
-                                 ;; :elide-asserts true
-                                 :target :nodejs
+            [lein-externs "0.1.3"]]
 
-                                 ;; no optimize compile (dev)
-                                 ;;:optimizations :none
-                                 ;; when no optimize uncomment
-                                 ;;:output-dir "app/js/out"
+  :clean-targets [:target-path
+                  "app/js/out"
+                  "app/js/renderer.js"
+                  "app/js/front.js"
+                  "figwheel_server.log"
+                  "npm-debug.log"]
 
-                                 ;; simple compile (dev)
-                                 :optimizations :simple
-
-                                 ;; advanced compile (prod)
-                                 ;; :optimizations :advanced
-
-                                 ;; :source-map "app/js/test.js.map"
-                                 :pretty-print true
-                                 :output-wrapper true
-                                 }}
-               :main {:id "main"
-                          :source-paths ["src"]
-                          :incremental true
-                          :jar true
-                          :assert true
-                          :compiler {:output-to "app/js/front.js"
-                                     :externs ["app/js/externs.js"]
-                                     :warnings true
-                                     ;; :elide-asserts true
-
-                                     ;; no optimize compile (dev)
-                                     ;;:optimizations :none
-                                     ;; when no optimize uncomment
-                                     ;;:output-dir "app/js/out"
-
-                                     ;; simple compile (dev)
-                                     :optimizations :none
-
-                                     ;; advanced compile (prod)
-                                     ;; :optimizations :none
-
-                                     :pretty-print true
-                                     :output-wrapper true
-                                     }}}}
   :figwheel {:http-server-root "app"
-             :ring-handler figwheel-middleware/app
-             :server-port 3449
+             :port 3449
+             :ring-handler figwheel-middleware/app}
 
-             ;; Start an nREPL server into the running figwheel process
-             :nrepl-port 7888
+  :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
-             ;; Load CIDER, refactor-nrepl and piggieback middleware
-              :nrepl-middleware ["cider.nrepl/cider-middleware"
-                                 "refactor-nrepl.middleware/wrap-refactor"
-                                 "cemerick.piggieback/wrap-cljs-repl"]})
+  :source-paths ["tools/server"]
+
+  :cljsbuild
+  {:builds
+   [{:id "main"
+     :source-paths ["tools"]
+     :compiler {:output-to "app/js/main.js"
+                :main "app.core"
+                :warnings true
+                :target :nodejs
+                :optimizations :simple}}
+    {:id "dev"
+     :source-paths ["src"]
+     :figwheel {:on-jsload "jarvis.core/mount-root"}
+     :compiler {:main "jarvis.core"
+                :output-to "app/js/app.js"
+                :output-dir "app/js/compiled/out"
+                :asset-path "js/compiled/out"
+                :externs ["app/js/externs.js"]
+                :output-wrapper true
+                :source-map-timestamp true}}]}
+
+  :profiles
+  {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                        [figwheel-sidecar "0.5.3"]]
+         :plugins [[lein-figwheel "0.5.0"]
+                   [cider/cider-nrepl "0.13.0-SNAPSHOT"]]}})
