@@ -8,16 +8,11 @@
             [jarvis.views.components.paster :as past]
             [jarvis.util.core :as util]))
 
-(defonce ^:private *introspect* (atom false))
-
 (defn- def-clicked [elem path]
   (let [[elem path] (if (< 1 (count path))
                       [(nth path 1) [(first path)]]
                       [elem path])]
     (dispatch [:node-clicked elem path])))
-
-(defn- scratch-clicked [elem path]
-  (dispatch [:node-clicked elem path]))
 
 (defn- def-hover [type elem path]
   (let [elem (if (< 1 (count path))
@@ -25,28 +20,36 @@
                elem)]
     (dispatch [:node-hover type elem])))
 
+(defn- def-code [item index]
+  [r/render
+   {:on-click def-clicked
+    :path []
+    :id :scratch
+    :on-hover def-hover}
+   item])
+
+(defn- scratch-clicked [elem path]
+  (dispatch [:node-clicked elem path]))
+
 (defn- scratch-hover [type elem]
   (dispatch [:node-hover type elem]))
 
-(defn- code [h item index]
-  (let [id (:id h)
+(defn- scratch-code [item index h]
+  (let [id :scratch
         pasting? (:pasting h)]
-    (let [item-to-show (if @*introspect* (->> item walk/normalize sc/parse) item)]
-      [rc/border
-       :border (str "1px dashed " "transparent")
-       :child [r/render
-               {:on-click (:on-click h)
-                :path []
-                :paster pasting?
-                :id id
-                :on-hover (:on-hover h)}
-               item-to-show]])))
+    [r/render
+     {:on-click scratch-clicked
+      :path []
+      :paster pasting?
+      :id id
+      :on-hover scratch-hover}
+     item]))
 
-(defn- code-list [h codes]
+(defn- code-list [codes render-fn & args]
   [v-box
    :align :start
    :style {:max-width "100%"}
-   :children (map-indexed (fn [index item] [code h item index]) codes)])
+   :children (map-indexed #(into [render-fn %2 %1] args) codes)])
 
 (defn- paster-for [id]
   [past/big
@@ -57,17 +60,10 @@
   (let [h {:pasting pasting?}]
     [v-box
      :gap "1em"
-     :children [[code-list (assoc h
-                                  :id :defs
-                                  :pasting false
-                                  :on-click def-clicked
-                                  :on-hover def-hover) defs]
+     :children [[code-list defs def-code]
                 (if pasting? [paster-for :defs])
                 [rc/line]
-                [code-list (assoc h
-                                  :id :scratch
-                                  :on-click scratch-clicked
-                                  :on-hover scratch-hover) scratch]
+                [code-list scratch scratch-code {:pasting pasting?}]
                 (if pasting? [paster-for :scratch])]]))
 
 (defn render []
