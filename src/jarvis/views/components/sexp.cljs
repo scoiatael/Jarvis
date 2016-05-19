@@ -14,6 +14,7 @@
 
 (def ^:private type->color {:keyword sol/yellow
                             :symbol sol/base01
+                            :reserved-symbol sol/blue
                             :number sol/green
                             :string sol/magenta
                             :list sol/violet
@@ -29,6 +30,7 @@
     (case (-> stringified clojure.string/trim)
       "quote" "'"
       stringified)))
+(defn- render-reserved-symbol [o k] (code-text o (prettify-symbol k) (type->color :reserved-symbol)))
 (defn- render-symbol [o k] (code-text o (prettify-symbol k) (type->color :symbol)))
 (defn- render-number [o k] (code-text o (str k) (type->color :number)))
 (defn- render-string [o k] (code-text o (str "\"" k "\"") (type->color :string)))
@@ -138,6 +140,7 @@
                     :nil (render-nil opts value)
                     :vector [render-vector opts value]
                     :keyword [render-keyword opts value]
+                    :reserved-symbol [render-reserved-symbol opts value]
                     :symbol [render-symbol opts value]
                     :number [render-number opts value]
                     :string [render-string opts value]

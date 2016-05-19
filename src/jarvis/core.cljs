@@ -18,7 +18,6 @@
 (enable-console-print!)
 
 (defn mount-root []
-  (.log js/console "Re-mounting root")
   (subs/register!)
   (handlers/register!)
 
