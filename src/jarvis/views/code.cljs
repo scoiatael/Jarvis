@@ -4,7 +4,7 @@
             [reagent.core :refer [atom]]
             [jarvis.syntax.core :as sc]
             [jarvis.syntax.walk :as walk]
-            [jarvis.views.components.code_boxes :as r]
+            [jarvis.views.components.sexp :as r]
             [jarvis.views.components.paster :as past]
             [jarvis.util.core :as util]))
 
@@ -21,12 +21,16 @@
     (dispatch [:node-hover type elem])))
 
 (defn- def-code [item index]
-  [r/render
-   {:on-click def-clicked
-    :path []
-    :id :scratch
-    :on-hover def-hover}
-   item])
+  [rc/box
+   :style {:margin "0.5em"}
+   :child
+   [r/render
+    {:on-click def-clicked
+     :path []
+     :concise true
+     :id :defs
+     :on-hover def-hover}
+    item]])
 
 (defn- scratch-clicked [elem path]
   (dispatch [:node-clicked elem path]))
