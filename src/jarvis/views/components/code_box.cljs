@@ -23,11 +23,14 @@
      :on-mouse-over (partial dont-bubble #(on-hover :over id parent-id))
      :on-mouse-out (partial dont-bubble #(on-hover :out id parent-id))}))
 
+(defn- error-tooltip [errors]
+  (->> errors seq (map name) (clojure.string/join ", ")))
+
 (defn- render-errors [errors]
   (let [has-errors? (not (empty? errors))]
     (if has-errors?
       [rc/md-circle-icon-button
-       :tooltip (str errors)
+       :tooltip (error-tooltip errors)
        :style {:z-index 1
                :color sol/red}
        :size :smaller
@@ -76,7 +79,7 @@
   [rc/button
    :label code
    :class "btn-danger"
-   :tooltip (str errors)])
+   :tooltip (error-tooltip errors)])
 
 (defn code-text [o code color]
   (let [errors (:errors o)
