@@ -15,13 +15,10 @@
 
 (def app (.-app electron))
 
-(fw/watch-and-reload
-  :websocket-url   "ws://localhost:3449/figwheel-ws"
-  :jsload-callback 'mount-root)
-
 (enable-console-print!)
 
 (defn mount-root []
+  (.log js/console "Re-mounting root")
   (subs/register!)
   (handlers/register!)
 
@@ -40,3 +37,8 @@
   (mount-root)
   (ipc/start-server! {})
   (r-f/dispatch-sync [:initialise-db]))
+
+(when js/goog.DEBUG
+  (fw/watch-and-reload
+   :websocket-url   "ws://localhost:3449/figwheel-ws"
+   :jsload-callback mount-root))

@@ -48,7 +48,6 @@
                 :optimizations :simple}}
     {:id "dev"
      :source-paths ["src"]
-     :figwheel {:on-jsload "jarvis.core/mount-root"}
      :compiler {:main "jarvis.core"
                 :output-to "app/js/app.js"
                 :output-dir "app/js/compiled/out"
