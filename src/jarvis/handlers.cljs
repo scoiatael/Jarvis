@@ -58,9 +58,14 @@
    r/node-paste-or-cut)
 
   (register-handler
-   :paster-clicked-for
+   :def-clicked
    middlewares
-   r/add-root-node)
+   r/node-push-scratch)
+
+  (register-handler
+   :icon-play-clicked
+   middlewares
+   r/eval-pasting)
 
   (register-handler
    :node-hover

@@ -15,9 +15,9 @@
                  :disabled? (disabled? :delete)]
 
                 [rc/md-circle-icon-button
-                 :md-icon-name "zmdi-undo"
-                 :on-click #(dispatch [:icon-undo-clicked])
-                 :disabled? (disabled? :undo)]
+                 :md-icon-name "zmdi-play"
+                 :on-click #(dispatch [:icon-play-clicked])
+                 :disabled? (disabled? :play)]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-file-text"
@@ -28,4 +28,5 @@
         can-undo? (subscribe [:can-undo?])]
     (fn []
       [circle-controllers {:delete @pasting?
+                           :play @pasting?
                            :undo @can-undo?}])))

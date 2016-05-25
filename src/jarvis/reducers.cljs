@@ -128,6 +128,12 @@
     (paste-node db node path)
     (cut-node db node path)))
 
+(defn node-push-scratch [db [node path]]
+  (-> db
+      (s/remove-node path node)
+      (clear-node node)
+      (s/push-node :scratch node)))
+
 (defn initialise-db [_ _]
   s/empty-state)
 
@@ -135,11 +141,10 @@
   (start-update-suggestions db)
   db)
 
-(defn add-root-node [db [id]]
-  (let [node (:pasting db)
-        process-node (if (= id :defs) (fn [db] (eval-node db node)) identity)]
+(defn eval-pasting [db _]
+  (let [node (:pasting db)]
     (-> db
-        (s/push-node id node)
+        (s/push-node :defs node)
         (clear-node node)
-        process-node
+        (eval-node node)
         (set-pasting nil))))
