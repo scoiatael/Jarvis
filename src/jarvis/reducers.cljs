@@ -84,7 +84,9 @@
       (s/update-node id #(walk/with-info % {:marked true}))))
 
 (defn push-namespaced-fn [db [ns fn]]
-  (push-code db (str ns "/" fn)))
+  (-> db
+      (assoc-in [:modal] nil)
+      (push-code (str ns "/" fn))))
 
 (def ^:private tmp-file "examples/file1.clj")
 
