@@ -4,6 +4,12 @@
 
 (def renderer (.-ipcRenderer (nodejs/require "electron")))
 
-(defn start-server! [params]
+(def ^:dynamic ^:private params {})
+
+(defn start-server! []
   (util/log! "Requesting nREPL start..")
   (.send renderer "start-server" (clj->js params)))
+
+(defn restart-server! []
+  (util/log! "Requesting nREPL restart..")
+  (.send renderer "restart-server" (clj->js params)))

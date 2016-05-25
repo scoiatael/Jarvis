@@ -27,14 +27,14 @@
 (defn ^:export init []
   (goog.style/installStyles app/styles)
 
-  (.once ipc/renderer "server-started"
+  (.on ipc/renderer "server-started"
          (fn [srv] (nrepl/connect-to-server
                    (fn []
                      (util/log! "Connected to nREPL")
                      (r-f/dispatch [:repl-connected])))))
 
   (mount-root)
-  (ipc/start-server! {})
+  (ipc/start-server!)
   (r-f/dispatch-sync [:initialise-db]))
 
 (when js/goog.DEBUG

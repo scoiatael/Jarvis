@@ -18,7 +18,8 @@
 (def ^:pricate check-schema-mw (after (partial check-and-throw st/schema)))
 
 (def ^:private middlewares
-  [check-schema-mw
+  [
+   (when goog.DEBUG check-schema-mw)
    r-f/debug
    r-f/trim-v])
 
@@ -63,6 +64,11 @@
    r/node-push-scratch)
 
   (register-handler
+   :scratch-paster-clicked
+   middlewares
+   r/node-push-pasting-scratch)
+
+  (register-handler
    :icon-play-clicked
    middlewares
    r/eval-pasting)
@@ -70,10 +76,10 @@
   (register-handler
    :node-hover
    r-f/trim-v
-   (fn [db [ev node]]
+   (fn [db [ev node path]]
      (case ev
-       :over (r/mark-node db [node])
-       :out (r/unmark-node db [node]))))
+       :over (r/mark-node db [node path])
+       :out (r/unmark-node db [node path]))))
 
   (register-handler
    :error-backdrop-clicked

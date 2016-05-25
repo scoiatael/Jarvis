@@ -4,7 +4,6 @@
             [jarvis.syntax.scope :refer [global-vars]]))
 
 (defn symbol-type [symbol]
-  (util/log! "|> " symbol " has type " (global-vars symbol))
   (if (global-vars symbol)
     :reserved-symbol
     :symbol))

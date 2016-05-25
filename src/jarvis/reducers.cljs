@@ -5,6 +5,7 @@
             [jarvis.syntax.parser :as parser]
             [jarvis.util.file :as file]
             [jarvis.util.nrepl :as nrepl]
+            [jarvis.util.ipc :as ipc]
             [jarvis.util.logger :as util]
             [jarvis.util.promise :as p]
             [jarvis.state.core :as s]))
@@ -103,8 +104,9 @@
 (defn push-file [db [contents]]
     (let [parsed (->> contents parser/file (map ingest-form))]
       ;; TODO: Push to defs?
-      (let [new-db (reduce #(s/push-code %1 :scratch %2) (s/with-empty-nodes db) parsed)]
+      (let [new-db (reduce #(s/push-code %1 :scratch %2) s/empty-state parsed)]
         ;; TODO: update only suggestions for user namespace
+        (ipc/restart-server!)
         (start-update-suggestions new-db)
         new-db)))
 
@@ -133,6 +135,13 @@
       (s/remove-node path node)
       (clear-node node)
       (s/push-node :scratch node)))
+
+(defn node-push-pasting-scratch [db _]
+  (let [node (:pasting db)]
+    (-> db
+        (s/push-node :scratch node)
+        (clear-node node)
+        (set-pasting nil))))
 
 (defn initialise-db [_ _]
   s/empty-state)

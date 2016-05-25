@@ -1,6 +1,7 @@
 (ns jarvis.views.modal
   (:require [re-com.core :refer [v-box box h-box input-textarea gap single-dropdown] :as rc]
-            [re-frame.core :as r-f :refer [subscribe dispatch]]))
+            [re-frame.core :as r-f :refer [subscribe dispatch]]
+            [jarvis.views.suggestions :as suggestions]))
 
 
 (def ^:private *elems* {"(def *var* *value*)" "(def)"
@@ -27,7 +28,10 @@
 
 (defn- edit-elem-panel []
   [v-box
-   :children [[add-elem-panel]
+   :children [[box
+               :size "20em"
+               :child [suggestions/render]]
+              [add-elem-panel]
               [edit-elem]]])
 
 (defn- modal-panel []

@@ -14,7 +14,7 @@
   (let [elem (if (< 1 (count path))
                (nth path 1)
                elem)]
-    (dispatch [:node-hover type elem])))
+    (dispatch [:node-hover type elem []])))
 
 (defn- code [item index]
   [rc/box

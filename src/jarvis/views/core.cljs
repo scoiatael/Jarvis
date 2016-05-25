@@ -7,7 +7,6 @@
             [jarvis.views.scratch :as scratch]
             [jarvis.views.defs :as defs]
             [jarvis.views.circle-controllers :as circle-controllers]
-            [jarvis.views.suggestions :as suggestions]
             [jarvis.views.status-bar :as status-bar]
             [jarvis.views.modal :as modal]
             [jarvis.views.error :as error]))
@@ -18,17 +17,13 @@
    :gap "1em"
    :children [[box
                :size "1"
-               :child [defs/render]]
+               :child [scratch/render]]
 
               [circle-controllers/render]
 
-              ;; [box
-              ;;  :size "20em"
-              ;;  :child [suggestions/render]]
-
               [box
                :size "1"
-               :child [scratch/render]]]])
+               :child [defs/render]]]])
 
 (defn main []
   [v-box

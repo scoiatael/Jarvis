@@ -16,9 +16,6 @@
 (def empty-state {:nodes (reduce #(assoc-in %1 [:nmap %2] '()) nmap/fresh roots)
                   :suggestions {}})
 
-(defn with-empty-nodes [db]
-  (assoc-in db [:nodes] (:nodes empty-state)) )
-
 (defn- nodes [state root]
   {:pre (roots root)}
   (let [nm (:nodes state)]
