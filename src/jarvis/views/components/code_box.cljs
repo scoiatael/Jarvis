@@ -54,10 +54,10 @@
    :margin "0.5em"})
 
 (defn- concise-box-style [color]
-  {:border (str "solid 3px " color)
-   :border-top "0px"
-   :border-bottom "0px"
-   :border-radius "0.8em"
+  {:border (str "solid 1px " color)
+   ;; :border-top "0px"
+   ;; :border-bottom "0px"
+   ;; :border-radius "0.8em"
    :height "100%"
    :padding "0.2em"})
 
