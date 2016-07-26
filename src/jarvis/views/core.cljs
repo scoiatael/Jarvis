@@ -4,9 +4,9 @@
             [jarvis.views.font :as font]
             [jarvis.views.colors.solarized :as sol]
             [jarvis.util.core :as util]
-            [jarvis.views.code :as code]
+            [jarvis.views.scratch :as scratch]
+            [jarvis.views.defs :as defs]
             [jarvis.views.circle-controllers :as circle-controllers]
-            [jarvis.views.suggestions :as suggestions]
             [jarvis.views.status-bar :as status-bar]
             [jarvis.views.modal :as modal]
             [jarvis.views.error :as error]))
@@ -15,15 +15,15 @@
   [h-box
    :style { :height "100%" }
    :gap "1em"
-   :children [[circle-controllers/render]
+   :children [[box
+               :size "1"
+               :child [scratch/render]]
 
-              [box
-               :size "20em"
-               :child [suggestions/render]]
+              [circle-controllers/render]
 
               [box
                :size "1"
-               :child [code/render]]]])
+               :child [defs/render]]]])
 
 (defn main []
   [v-box
@@ -35,7 +35,7 @@
               [modal/render]
               [error/render]]])
 
-(defn styles []
+(def styles
   (css [:body
         {:font-family font/main
          :font-size "medium"

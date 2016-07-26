@@ -4,12 +4,6 @@
             [jarvis.state.core :as s]))
 
 (defn register! []
-  (register-sub
-   :can-remove?
-   (fn [db _]
-     (reaction (if (:nodes @db)
-                 (> (s/nodes-length @db) 0)
-                 false))))
 
   (register-sub
    :can-undo?
@@ -21,9 +15,14 @@
      (reaction (:pasting @db))))
 
   (register-sub
-   :codes
+   :defs
    (fn [db _]
-     (reaction (s/nodes @db))))
+     (reaction (s/defs @db))))
+
+  (register-sub
+   :scratch
+   (fn [db _]
+     (reaction (s/scratch @db))))
 
   (register-sub
    :error
@@ -38,7 +37,7 @@
   (register-sub
    :status
    (fn [db _]
-     (reaction true)))
+     (reaction [(:nrepl-connection @db) (:pasting @db)])))
 
   (register-sub
    :suggestions

@@ -15,24 +15,18 @@
                  :disabled? (disabled? :delete)]
 
                 [rc/md-circle-icon-button
-                 :md-icon-name "zmdi-undo"
-                 :on-click #(dispatch [:icon-undo-clicked])
-                 :disabled? (disabled? :undo)]
+                 :md-icon-name "zmdi-play"
+                 :on-click #(dispatch [:icon-play-clicked])
+                 :disabled? (disabled? :play)]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-file-text"
-                 :on-click #(dispatch [:icon-file-clicked])]
-
-                [rc/md-circle-icon-button
-                 :md-icon-name "zmdi-minus"
-                 :on-click #(dispatch [:icon-minus-clicked])
-                 :disabled? (disabled? :minus)]]]))
+                 :on-click #(dispatch [:icon-file-clicked])]]]))
 
 (defn render []
   (let [pasting? (subscribe [:pasting?])
-        can-remove? (subscribe [:can-remove?])
         can-undo? (subscribe [:can-undo?])]
     (fn []
       [circle-controllers {:delete @pasting?
-                           :undo @can-undo?
-                           :minus @can-remove?}])))
+                           :play @pasting?
+                           :undo @can-undo?}])))

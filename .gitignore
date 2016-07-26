@@ -15,6 +15,6 @@ node_modules
 figwheel_server.log
 /app/js/*
 !/app/js/externs.js
-!/app/js/main.js
 .nrepl-port
 *.log
+target

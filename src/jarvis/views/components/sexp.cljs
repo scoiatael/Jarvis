@@ -1,92 +1,20 @@
-(ns jarvis.views.components.code_boxes
+(ns jarvis.views.components.sexp
   (:require [re-com.core :as rc]
             [re-com.box :refer [flex-flow-style]]
-            [garden.color :as color]
             [jarvis.views.colors.solarized :as sol]
             [jarvis.syntax.walk :as walk]
-            [jarvis.views.font :as font]
-            [jarvis.util.core :as util]))
-
-(defn- render-errors [errors]
-  (let [has-errors? (not (empty? errors))]
-    (if has-errors?
-      [rc/md-circle-icon-button
-       :tooltip (str errors)
-       :style {:z-index 1
-               :color sol/red}
-       :size :smaller
-       :class "btn-danger"
-       :md-icon-name "zmdi-alert-triangle"]
-      [:div])))
-
-(def dont-bubble util/dont-bubble)
-
-(defn- attrs [o]
-  (let [id (:id o)
-        parent-id (:path o)
-        on-click (:on-click o #())
-        on-hover (:on-hover o #())]
-    {:on-click (partial dont-bubble #(on-click id parent-id))
-     :on-mouse-over (partial dont-bubble #(on-hover :over id parent-id))
-     :on-mouse-out (partial dont-bubble #(on-hover :out id parent-id))}))
-
-(def ^:private marked-color
-  (-> sol/green color/as-hsl (color/desaturate 75) (color/lighten 50) color/as-hex))
-
-(defn- paster [o pos]
-  [rc/md-circle-icon-button
-   :attr (attrs (dissoc (into o {:id {:after pos}}) :on-hover))
-   :md-icon-name "zmdi-format-color-fill"
-   :size (or (:size o) :regular)
-   :style {:background-color marked-color
-           :color "black"}])
-
-(defn- style [o color]
-  (let [marked (:marked o)
-        base {:color color
-              :text-align "center"
-              :transition "0.5s"
-              :font-family font/code}]
-    (into base (if marked {:background-color marked-color} {}))))
+            [jarvis.util.core :as util]
+            [jarvis.views.components.code-box :refer [code-text code-box paster]]))
 
 (defn push-id [o & args]
   (conj o
         {:path (apply conj (:path o) args)}))
 
-(defn- code-box [o code color]
-  (let [errors (:errors o)]
-    [rc/box
-     :attr (attrs o)
-     :size "0 1 auto"
-     :style (into (style o color)
-                  {:border (str "solid 3px " color)
-                   :border-radius "2px"
-                   :height "100%"
-                   :padding "5px"
-                   :margin "0.5em"})
-     :child  [rc/v-box
-              :size "0 1 auto"
-              :align :center
-              :children [[render-errors errors] code]]]))
-
-(defn- error-text [errors code]
-  [rc/button
-   :label code
-   :class "btn-danger"
-   :tooltip (str errors)])
-
-(defn- code-text [o code color]
-  (let [errors (:errors o)]
-    [rc/box
-     :attr (attrs o)
-     :align :center
-     :style (style o color)
-     :child  (if (empty? errors) code [error-text errors code])]))
-
 (defn- dissoc-errors [o] (dissoc o :errors))
 
 (def ^:private type->color {:keyword sol/yellow
                             :symbol sol/base01
+                            :reserved-symbol sol/blue
                             :number sol/green
                             :string sol/magenta
                             :list sol/violet
@@ -102,6 +30,7 @@
     (case (-> stringified clojure.string/trim)
       "quote" "'"
       stringified)))
+(defn- render-reserved-symbol [o k] (code-text o (prettify-symbol k) (type->color :reserved-symbol)))
 (defn- render-symbol [o k] (code-text o (prettify-symbol k) (type->color :symbol)))
 (defn- render-number [o k] (code-text o (str k) (type->color :number)))
 (defn- render-string [o k] (code-text o (str "\"" k "\"") (type->color :string)))
@@ -155,7 +84,6 @@
               c)))
 
 (defn- render-map [o k]
-  ;; (util/log! k)
   (let [par (partition 2 k)
         sorted (sort-by #(-> % first walk/info :id) par)
         children (->> sorted
@@ -173,23 +101,53 @@
   (util/error! "Unknown value" k " of " t)
   (code-box o (str k) (type->color :misc)))
 
+(defn- render-stdout [out]
+  [rc/v-box
+   :children (map (fn [line] [rc/box
+                             :style {:background-color sol/base02
+                                     :padding-left "1em"
+                                     :color sol/base2}
+                             :child (str line)]) out)])
+
+(defn- render-ex [ex]
+  [rc/box
+   :style {:background-color sol/red}
+   :child (str ex)])
+
+(defn- render-val [val]
+  [rc/box
+   :child (str val)])
+
+(defn- render-info [info component]
+  [rc/v-box
+   :children [component
+              [rc/gap :size "0.3em"]
+              [render-stdout (:out info)]
+              [render-ex (:ex info)]
+              [render-val (:val info)]]])
+
 (defn render [o code]
-  {:pre (walk/is-info? code)}
+  {:pre [(walk/is-info? code)]}
   (let [value (walk/value code)
         info (walk/info code)
         type (:type info)
         errors (info :errors)
         id (:id info)
-        opts (conj (push-id o (:id o)) info)]
-    (case type
-      :bool (render-keyword opts value)
-      :nil (render-nil opts value)
-      :vector [render-vector opts value]
-      :keyword [render-keyword opts value]
-      :symbol [render-symbol opts value]
-      :number [render-number opts value]
-      :string [render-string opts value]
-      :list [render-list opts value]
-      :map [render-map opts value]
-      nil [render-nil opts value]
-      [render-misc opts value type])))
+        opts (conj (push-id o (:id o)) info)
+        eval-info (:eval info)
+        component (case type
+                    :bool (render-keyword opts value)
+                    :nil (render-nil opts value)
+                    :vector [render-vector opts value]
+                    :keyword [render-keyword opts value]
+                    :reserved-symbol [render-reserved-symbol opts value]
+                    :symbol [render-symbol opts value]
+                    :number [render-number opts value]
+                    :string [render-string opts value]
+                    :list [render-list opts value]
+                    :map [render-map opts value]
+                    nil [render-nil opts value]
+                    [render-misc opts value type])]
+    (if (nil? eval-info)
+      component
+      [render-info eval-info component])))

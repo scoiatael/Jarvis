@@ -17,6 +17,7 @@
                              :projectPath "examples"}))
 
 (def ^:private *server* (atom nil))
+(def ^:private *server-starting* (atom false))
 
 (defn- server-js->clj [srv]
   ;; srv == {proc: PROCESS, hostname: STRING, port: NUMBER, started: BOOL, exited: BOOL, timedout: BOOL}
@@ -38,12 +39,15 @@
 (defn server-present? [] (not (nil? @*server*)))
 
 (defn- launch-server [opts cb] (if-not (server-present?)
-                                 (.start Server (server-options opts)
-                                         (fn [err serv]
-                                           (if-not (nil? err) (util/error! "nREPL start error: " err)
-                                                   (do
-                                                     (reset! *server* serv)
-                                                     (cb (server!))))))
+                                 (do
+                                   (reset! *server-starting* true)
+                                   (.start Server (server-options opts)
+                                           (fn [err serv]
+                                             (if-not (nil? err) (util/error! "nREPL start error: " err)
+                                                     (do
+                                                       (reset! *server-starting* false)
+                                                       (reset! *server* serv)
+                                                       (cb (server!)))))))
                                  ;; TODO: handle timed out or dead server
                                  (cb (server!))))
 
@@ -58,6 +62,9 @@
                              (util/log! "nREPL killed")
                              (if-not (nil? err)
                                (util/error! "nREPL kill error:" err)
-                               (cb))))
-      ;; TODO: handle timed out or dead server
-      (util/error! "nREPL not launched"))))
+                               (cb {:was-running? true
+                                    :is-starting? @*server-starting*}))))
+      (do
+        (util/error! "nREPL not launched")
+        (cb {:was-running? false
+             :is-starting? @*server-starting*})))))

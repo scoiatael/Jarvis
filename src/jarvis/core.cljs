@@ -15,33 +15,29 @@
 
 (def app (.-app electron))
 
-(fw/watch-and-reload
-  :websocket-url   "ws://localhost:3449/figwheel-ws"
-  :jsload-callback 'mount-root)
-
 (enable-console-print!)
 
 (defn mount-root []
-  (reagent/render [app/main]
-                  (.getElementById js/document "app")))
-
-(defn init! []
-  (goog.style/installStyles (app/styles))
-
-  (r-f/dispatch [:initialise-db])
-
   (subs/register!)
   (handlers/register!)
 
-  (.once ipc/renderer "server-started"
+  (reagent/render [app/main]
+                  (.getElementById js/document "app")))
+
+(defn ^:export init []
+  (goog.style/installStyles app/styles)
+
+  (.on ipc/renderer "server-started"
          (fn [srv] (nrepl/connect-to-server
                    (fn []
                      (util/log! "Connected to nREPL")
                      (r-f/dispatch [:repl-connected])))))
 
-  (util/log! "Requesting nREPL start..")
-  (ipc/start-server! {})
+  (mount-root)
+  (ipc/start-server!)
+  (r-f/dispatch-sync [:initialise-db]))
 
-  (mount-root))
-
-(init!)
+(when js/goog.DEBUG
+  (fw/watch-and-reload
+   :websocket-url   "ws://localhost:3449/figwheel-ws"
+   :jsload-callback mount-root))

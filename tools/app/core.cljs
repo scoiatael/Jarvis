@@ -10,15 +10,12 @@
 
 (def BrowserWindow (.-BrowserWindow electron))
 
-;; (def crash-reporter (.-crashReporter electron))
-
 (def app (.-app electron))
 
 (def *win* (atom nil))
 
 (defn -main []
   (util/log! "Starting up..")
-  ;; (.start crash-reporter)
 
   (.on ipc/main "start-server"
        (fn [ev arg]
@@ -28,11 +25,24 @@
   (.on ipc/main "kill-server"
        (fn [ev arg]
          (nrepl/kill!
-          (partial ipc/reply! ev "server-killed"))))
+          #(ipc/reply! ev "server-killed" {}))))
+
+  (.on ipc/main "restart-server"
+       (fn [ev arg]
+         (util/log! "Restarting server..")
+         (nrepl/kill!
+          #(do
+             (util/log! "Killed server, starting..")
+             (ipc/reply! ev "server-killed" {})
+             (if-not (:is-starting? %)
+               (nrepl/launch! {}
+                              (partial ipc/reply! ev "server-started")))))))
 
   ;; error listener
   (.on nodejs/process "error"
-    (fn [err] (.log js/console err)))
+       (fn [err]
+         (.error js/console err)
+         (.quit app)))
 
   ; window all closed listener
    (.on app "window-all-closed"
@@ -41,7 +51,7 @@
 
   (.on app "will-quit"
        (fn [ev] (do
-                 (util/log! "Quitting, killing repl? ->", (nrepl/server-present?))
+                 (util/log! "Quitting")
                  (if (nrepl/server-present?)
                    (do
                      (.preventDefault ev)
@@ -52,7 +62,6 @@
      (fn []
        (reset! *win* (BrowserWindow. (clj->js {:fullscreen true :title "Jarvis"})))
 
-       ;; when no optimize comment out
        (.loadURL @*win* (str "file://" (.resolve path (js* "__dirname") "../index.html")))
 
        (.on @*win* "closed" (fn [] (reset! *win* nil))))))

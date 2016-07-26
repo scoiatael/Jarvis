@@ -1,7 +1,6 @@
 (ns jarvis.syntax.scope
   (:require [jarvis.syntax.walk :as walk]
             [jarvis.util.nrepl :as nrepl]
-            [jarvis.syntax.types :as t]
             [jarvis.util.logger :as util]))
 
 (def ^:private ^:const keyword-introducing-scope
@@ -16,7 +15,7 @@
   (fn-arity [this fn-name cb])
   (var-defined? [this var cb]))
 
-(def ^:private ^:const global-vars
+(def ^:const global-vars
   (into keyword-introducing-scope #{'def
                                     '+
                                     '-
@@ -44,7 +43,7 @@
   (let [name (first this)]
       (if (satisfies? walk/Info name)
         (walk/value name)
-        nil)))
+        name)))
 
 (defrecord LetScope [root bindings]
   Scope
@@ -52,32 +51,49 @@
     (let [fn-def (->> this bindings-let (filter #(= fn-name (list->fn-name %))) first last)]
       (if (nil? fn-def)
         (fn-arity (:root this) fn-name cb)
-        (-> fn-def walk/info :fn-arity cb))))
+        (-> fn-def walk/info :fn-arity cb)
+        )))
   (var-defined? [this var cb]
     (if (-> (->> this bindings-let (map list->fn-name)) (list-contains? var))
       (cb true)
-      (var-defined? (:root this) var cb))))
+      (do 
+        ;; (util/error! var "not found in" this (->> this bindings-let (map list->fn-name)))
+        (var-defined? (:root this) var cb)))))
 
 (defrecord FnScope [root arguments]
   Scope
   (fn-arity [this fn-name cb]
-    (if (list-contains? (:arguments this) fn-name)
+    (if (list-contains? (-> this :arguments walk/strip) fn-name)
       (cb :any)
-      (fn-arity (:root this) fn-name cb)))
+      (do
+        ;; (util/error! fn-name "not found in" this)
+        (fn-arity (:root this) fn-name cb))))
   (var-defined? [this var cb]
-    (if (list-contains? (:arguments this) var)
+    (if (list-contains? (-> this :arguments walk/strip) var)
       (cb true)
-      (var-defined? (:root this) var cb))))
+      (do
+        ;; (util/error! var "not found in" this)
+        (var-defined? (:root this) var cb)))))
+
+(defn- arguments-or-error [value pos]
+  (let [arg-array (nth value pos :not-found)]
+    (if (= arg-array :not-found)
+      (util/error! value pos {:error :not-found})
+      (if-let [args (-> arg-array walk/value)]
+        {:arguments args}
+        (util/error! value pos arg-array {:error :not-an-array})))))
 
 (defn- scope-of-let [root-scope value]
-  (LetScope. root-scope (-> value (nth 1) walk/value)))
+  (if-let [arguments (:arguments (arguments-or-error value 1))]
+    (LetScope. root-scope arguments)))
 
 (defn- scope-of-defn [root-scope value]
-  (let [arguments (-> value (nth 2) walk/value walk/strip)]
+  (if-let [arguments (:arguments (arguments-or-error value 2))]
     (FnScope. root-scope arguments)))
 
 (defn- scope-of-fn [root-scope value]
-  (FnScope.  root-scope (-> value (nth 1) walk/value walk/strip)))
+  (if-let [arguments (:arguments (arguments-or-error value 1))]
+    (FnScope. root-scope arguments)))
 
 (defn- scope [root-scope code]
   (let [type (-> code walk/info :type)
@@ -92,7 +108,8 @@
 
 (defn- annotate-scope [root-scope code]
   (if (satisfies? walk/Info code)
-    (let [scope (scope root-scope code)
+    (let [maybe-scope (scope root-scope code)
+          scope (if (nil? maybe-scope) root-scope maybe-scope)
           scoped-code (walk/with-info code {:scope scope})]
       (walk/walk #(annotate-scope scope %) identity scoped-code))
     (walk/walk #(annotate-scope root-scope %) identity code)))

@@ -1,10 +1,17 @@
 (ns jarvis.syntax.semantics
-  (:require [jarvis.syntax.walk :as walk]))
+  (:require [jarvis.syntax.walk :as walk]
+            [jarvis.util.core :as util]))
+
+(defn safe-count-arity [value pos]
+  (let [arg-array (-> value (nth pos :not-found))]
+    (if (= :not-found arg-array)
+      nil
+      (-> arg-array walk/value count))))
 
 (defn- fn-arity [value]
   (case (-> value first walk/value)
-    defn (- (count (-> value (nth 2))) 1)
-    fn (- (count (-> value (nth 1))) 1)
+    defn (safe-count-arity value 2)
+    fn (safe-count-arity value 1)
     nil))
 
 (defn- call? [code]

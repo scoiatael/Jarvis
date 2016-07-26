@@ -1,51 +1,58 @@
 (ns jarvis.state.core
-  (:require [jarvis.util.logger :as util]
-            [jarvis.state.nodes-map :as nmap]
+  (:require [jarvis.util.core :as util]
+            [jarvis.state.nodes-map.core :as nmap]
             [schema.core :as s]))
 
 (def schema {:nodes nmap/schema
-             :active (s/maybe s/Num)
-             :error (s/maybe js/Error)
-             :modal (s/maybe s/Bool)
              :suggestions {s/Str [s/Symbol]}
-             :pasting (s/maybe s/Num)})
-(defrecord JarvisState [nodes active error modal suggestions pasting])
+             (s/optional-key :active) (s/maybe s/Num)
+             (s/optional-key :error) (s/maybe js/Error)
+             (s/optional-key :modal) (s/maybe s/Bool)
+             (s/optional-key :pasting) (s/maybe s/Num)
+             (s/optional-key :nrepl-connection) (s/maybe s/Bool)})
 
-(def empty-state (JarvisState. (nmap/fresh) nil nil nil {} nil))
+(def ^:constant roots #{:defs :scratch})
 
-(defn nodes [state]
-  (-> state :nodes nmap/nodes))
+(def empty-state {:nodes (reduce #(assoc-in %1 [:nmap %2] '()) nmap/fresh roots)
+                  :suggestions {}})
 
-(defn nodes-length [state]
-  (-> state :nodes nmap/root-length))
+(defn- nodes [state root]
+  {:pre (roots root)}
+  (let [nm (:nodes state)]
+    (nmap/expand-node nm root)))
 
-(defn valid-index? [state index]
-  (and (number? index) (< index (nodes-length state)) (< -1 index)))
+(defn defs [state]
+  (nodes state :defs))
+
+(defn scratch [state]
+  (nodes state :scratch))
 
 (defn code [state index]
-  (nmap/expand-node-index (:nodes state) index))
+  (nmap/expand-node (:nodes state) index))
 
-(defn- update-field [struct tuple]
-  (let [field (first tuple)
-        fun (last tuple)]
-    (update-in struct field fun)))
+(def ^:private update-fields util/update-fields)
 
-(defn update-fields [state field fun & args]
-  (reduce update-field state (conj (partition 2 args) [field fun])))
+(defn push-node [state root node]
+  {:pre [(roots root)]}
+  (update-in state
+             [:nodes :nmap root]
+             #(conj % (nmap/wrap-id node))))
 
-(defn push-code
-  ([state code]
-   (update-fields state
-                  [:nodes] #(nmap/push-root % code)))
-  ([state index code]
-   (update-fields state
-                  [:nodes] #(nmap/swap-at-root % index code))))
+(defn push-code [state root code]
+  {:pre [(roots root)]}
+  (update-in state
+             [:nodes] (fn [nm]
+                        (let [[index converted] (nmap/convert nm code)]
+                          (update-in converted
+                                     [:nmap root] #(conj % index))))))
 
-(defn nodes-empty? [state]
-  (< (nodes-length state) 1))
-
-(defn pop-code [state]
-  (update-in state [:nodes] nmap/pop-root))
+(defn inject-code [state old-index code]
+  (update-in state
+             [:nodes] (fn [nm]
+                        (let [[index converted] (nmap/convert nm code)
+                              map-index (:index index)]
+                          (update-in converted
+                                     [:nmap] #(clojure.set/rename-keys % {map-index old-index}))))))
 
 (defn update-node [state node-id update]
   (update-in state [:nodes] #(nmap/update-node % node-id update)))

@@ -18,7 +18,8 @@
 (def ^:pricate check-schema-mw (after (partial check-and-throw st/schema)))
 
 (def ^:private middlewares
-  [check-schema-mw
+  [
+   (when goog.DEBUG check-schema-mw)
    r-f/debug
    r-f/trim-v])
 
@@ -37,10 +38,18 @@
   (register-handler
    :repl-connected
    middlewares
-   r/update-suggestions)
+   (fn [db ev]
+     (-> db
+         (assoc-in [:nrepl-connection] true)
+         (r/update-suggestions ev))))
 
   (register-handler
    :edit-elem-changed
+   middlewares
+   r/modal->code)
+
+  (register-handler
+   :add-elem-clicked
    middlewares
    r/modal->code)
 
@@ -50,12 +59,27 @@
    r/node-paste-or-cut)
 
   (register-handler
-   :node-hover
+   :def-clicked
    middlewares
-   (fn [db [ev node]]
+   r/node-push-scratch)
+
+  (register-handler
+   :scratch-paster-clicked
+   middlewares
+   r/node-push-pasting-scratch)
+
+  (register-handler
+   :icon-play-clicked
+   middlewares
+   r/eval-pasting)
+
+  (register-handler
+   :node-hover
+   r-f/trim-v
+   (fn [db [ev node path]]
      (case ev
-       :over (r/mark-node db [node])
-       :out (r/unmark-node db [node]))))
+       :over (r/mark-node db [node path])
+       :out (r/unmark-node db [node path]))))
 
   (register-handler
    :error-backdrop-clicked
@@ -88,11 +112,6 @@
    r/open-file)
 
   (register-handler
-   :icon-minus-clicked
-   middlewares
-   r/pop-code)
-
-  (register-handler
    :namespace-function-clicked
    middlewares
    r/push-namespaced-fn)
@@ -108,6 +127,11 @@
    :add-error
    middlewares
    r/set-node-error)
+
+  (register-handler
+   :add-eval-info
+   middlewares
+   r/set-node-eval-info)
 
   (register-handler
    :push-file
