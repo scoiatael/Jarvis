@@ -10,7 +10,7 @@ const Page = () => {
       <h1 className="cover-heading">Visual Programming Editor - reimagined.</h1>
       <p className="lead">Jarvis is a simple visual Clojure editor.</p>
       <p className="lead">
-        < DownloadLink />
+        <DownloadLink />
       </p>
     </div>
     );
