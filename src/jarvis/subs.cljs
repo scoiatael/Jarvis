@@ -15,6 +15,11 @@
      (reaction (:pasting @db))))
 
   (register-sub
+   :tab
+   (fn [db _]
+     (reaction (:tab @db))))
+
+  (register-sub
    :defs
    (fn [db _]
      (reaction (s/defs @db))))

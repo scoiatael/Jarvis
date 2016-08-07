@@ -21,6 +21,7 @@
   (subs/register!)
   (handlers/register!)
 
+  (r-f/dispatch-sync [:initialise-db])
   (reagent/render [app/main]
                   (.getElementById js/document "app")))
 
@@ -34,8 +35,7 @@
                      (r-f/dispatch [:repl-connected])))))
 
   (mount-root)
-  (ipc/start-server!)
-  (r-f/dispatch-sync [:initialise-db]))
+  (ipc/start-server!))
 
 (when js/goog.DEBUG
   (fw/watch-and-reload

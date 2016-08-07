@@ -5,6 +5,7 @@
 
 (def schema {:nodes nmap/schema
              :suggestions {s/Str [s/Symbol]}
+             :tab s/Keyword ;; TODO one of tabs
              (s/optional-key :active) (s/maybe s/Num)
              (s/optional-key :error) (s/maybe js/Error)
              (s/optional-key :modal) (s/maybe s/Bool)
@@ -12,8 +13,10 @@
              (s/optional-key :nrepl-connection) (s/maybe s/Bool)})
 
 (def ^:constant roots #{:defs :scratch})
+(def ^:constant tabs #{:edit :eval})
 
 (def empty-state {:nodes (reduce #(assoc-in %1 [:nmap %2] '()) nmap/fresh roots)
+                  :tab :edit
                   :suggestions {}})
 
 (defn- nodes [state root]

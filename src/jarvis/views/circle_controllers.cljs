@@ -21,7 +21,11 @@
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-file-text"
-                 :on-click #(dispatch [:icon-file-clicked])]]]))
+                 :on-click #(dispatch [:icon-file-clicked])]
+
+                [rc/md-circle-icon-button
+                 :md-icon-name "zmdi-archive"
+                 :on-click #(dispatch [:icon-save-clicked])]]]))
 
 (defn render []
   (let [pasting? (subscribe [:pasting?])

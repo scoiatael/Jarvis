@@ -90,12 +90,26 @@
 
 (def ^:private tmp-file "examples/file1.clj")
 
-(defn open-file [db [fname]]
-  (let [fname tmp-file]
-    (file/open fname (fn [contents]
-                       ;; TODO: ensure eval finished before check? show error?
-                       ;; (nrepl/open! fname)
-                       (dispatch [:push-file contents]))))
+(defn open-file [db _]
+  (file/open-file-dialog (fn [fname_arr]
+                           (if-let [fname (first fname_arr)]
+                             ;; TODO: what if not exists?
+                             (file/open fname (fn [contents]
+                                                (ipc/restart-server! (file/dirname fname))
+                                                (dispatch [:push-file contents]))))))
+  db)
+
+(defn save-file [db _]
+  (file/save-file-dialog (fn [fname]
+                           (when fname
+                             (let [code (->>
+                                         (concat 
+                                          (-> db s/defs t/strip)
+                                          (-> db s/scratch t/strip))
+                                         (clojure.string/join "\n"))]
+                               (file/write fname code (fn []
+                                                        ;; TODO: dialog? message box?
+                                                        (util/log! "File saved")))))))
   db)
 
 ;; (defn write-file [db [fname contents]]
@@ -108,7 +122,6 @@
       ;; TODO: Push to defs?
       (let [new-db (reduce #(s/push-code %1 :scratch %2) s/empty-state parsed)]
         ;; TODO: update only suggestions for user namespace
-        (ipc/restart-server!)
         (start-update-suggestions new-db)
         new-db)))
 
@@ -152,10 +165,13 @@
   (start-update-suggestions db)
   db)
 
-(defn eval-pasting [db _]
+(defn eval-pasting [db]
   (let [node (:pasting db)]
     (-> db
         (s/push-node :defs node)
         (clear-node node)
         (eval-node node)
         (set-pasting nil))))
+
+(defn switch-to-tab [db [tab]]
+  (assoc-in db [:tab] tab))

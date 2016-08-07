@@ -61,7 +61,10 @@
   (register-handler
    :def-clicked
    middlewares
-   r/node-push-scratch)
+   (fn [db ev]
+     (-> db
+         (r/node-push-scratch ev)
+         (r/switch-to-tab [:edit]))))
 
   (register-handler
    :scratch-paster-clicked
@@ -71,7 +74,10 @@
   (register-handler
    :icon-play-clicked
    middlewares
-   r/eval-pasting)
+   (fn [db _]
+     (-> db
+         r/eval-pasting
+         (r/switch-to-tab [:eval]))))
 
   (register-handler
    :node-hover
@@ -112,9 +118,19 @@
    r/open-file)
 
   (register-handler
+   :icon-save-clicked
+   middlewares
+   r/save-file)
+
+  (register-handler
    :namespace-function-clicked
    middlewares
    r/push-namespaced-fn)
+
+  (register-handler
+   :tab-clicked
+   middlewares
+   r/switch-to-tab)
 
   ;; -- Lifecycle Event Handlers
 
