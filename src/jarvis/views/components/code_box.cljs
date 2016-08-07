@@ -13,6 +13,13 @@
       (color/lighten 50)
       color/as-hex))
 
+(def ^:private focus-color
+  (-> sol/red
+      color/as-hsl
+      (color/desaturate 75)
+      (color/lighten 50)
+      color/as-hex))
+
 (def ^:private dont-bubble util/dont-bubble)
 (defn- attrs [o]
   (let [id (:id o)
@@ -39,12 +46,13 @@
       [:div])))
 
 (defn- style [o color]
-  (let [marked (:marked o)
-        base {:color color
+  (let [base {:color color
               :text-align "center"
               :transition "0.5s"
               :font-family font/code}]
-    (into base (if marked {:background-color marked-color} {}))))
+    (reduce into base
+            [(if (:marked o) {:background-color marked-color} {})
+             (if (:focused o) {:background-color focus-color} {})])))
 
 (defn- normal-box-style [color]
   {:border (str "solid 3px " color)

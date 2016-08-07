@@ -12,7 +12,7 @@
 
 
 ;; -- Helpers ------------
-(defn- set-pasting [db value]
+(defn set-pasting [db value]
   (s/update-fields db [:pasting] (constantly value)))
 
 (defn- ingest-form [form]
@@ -58,28 +58,40 @@
             #(check-code code)))
   db)
 
-(defn- paste-node [db node-id path]
-  (-> (s/paste-node db path node-id (:pasting db))
-      (set-pasting nil)))
-
-(defn- cut-node [db node-id path]
-  (-> (s/remove-node db path node-id)
-      (set-pasting node-id)))
-
-(defn- unmark [db id]
+(defn- unmark [db id field]
   (if (nil? id)
     db
     (-> db
-        (s/update-fields [:active] #(if (= id %) nil %))
-        (s/update-node id #(walk/with-info % {:marked false})))))
+        (s/update-node id #(walk/with-info % {field false})))))
 
 ;; -- public -------------
+(defn paste-node [db [node-id path]]
+  (-> (s/paste-node db path node-id (:pasting db))
+      (set-pasting nil)))
+
+(defn cut-node [db [node-id path]]
+  (-> (s/remove-node db path node-id)
+      (set-pasting node-id)))
+
+(defn mark-focused [db [id path]]
+  (-> db
+      (unmark (-> db :focus first) :focused)
+      (s/update-fields [:focus] (constantly [id path]))
+      (s/update-node id #(walk/with-info % {:focused true}))))
+
+(defn unmark-focused [db]
+  (-> db
+      (unmark (-> db :focus first) :focused)
+      (s/update-fields [:focus] (constantly nil))))
+
 (defn unmark-node [db [id]]
-  (unmark db id))
+  (-> db
+      (s/update-fields [:active] (constantly nil))
+      (unmark id :marked)))
 
 (defn mark-node [db [id]]
   (-> db
-      (unmark (:active db))
+      (unmark (:active db) :marked)
       (s/update-fields [:active] (constantly id))
       (s/update-node id #(walk/with-info % {:marked true}))))
 
@@ -140,11 +152,6 @@
       (set-modal new-db nil)
       new-db)))
 
-(defn node-paste-or-cut [db [node path]]
-  (if (s/pasting? db)
-    (paste-node db node path)
-    (cut-node db node path)))
-
 (defn node-push-scratch [db [node path]]
   (-> db
       (s/remove-node path node)
@@ -172,6 +179,13 @@
         (clear-node node)
         (eval-node node)
         (set-pasting nil))))
+
+(defn eval-focus [db]
+  (let [node (:focus db)]
+    (-> db
+        (cut-node node)
+        eval-pasting
+        unmark-focused)))
 
 (defn switch-to-tab [db [tab]]
   (assoc-in db [:tab] tab))

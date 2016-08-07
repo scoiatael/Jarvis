@@ -7,17 +7,8 @@
     [v-box
      :children [[rc/md-circle-icon-button
                  :md-icon-name "zmdi-plus"
-                 :on-click #(dispatch [:icon-plus-clicked])]
-
-                [rc/md-circle-icon-button
-                 :md-icon-name "zmdi-delete"
-                 :on-click #(dispatch [:icon-delete-clicked])
-                 :disabled? (disabled? :delete)]
-
-                [rc/md-circle-icon-button
-                 :md-icon-name "zmdi-play"
-                 :on-click #(dispatch [:icon-play-clicked])
-                 :disabled? (disabled? :play)]
+                 :on-click #(dispatch [:icon-plus-clicked])
+                 :disabled? (disabled? :plus)]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-file-text"
@@ -25,12 +16,34 @@
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-archive"
-                 :on-click #(dispatch [:icon-save-clicked])]]]))
+                 :on-click #(dispatch [:icon-save-clicked])]
+
+                [rc/md-circle-icon-button
+                 :md-icon-name "zmdi-play"
+                 :on-click #(dispatch [:icon-play-clicked])
+                 :disabled? (disabled? :play)]
+
+                [rc/md-circle-icon-button
+                 :md-icon-name "zmdi-copy"
+                 :on-click #(dispatch [:icon-copy-clicked])
+                 :disabled? (disabled? :copy)]
+
+                [rc/md-circle-icon-button
+                 :md-icon-name "zmdi-swap"
+                 :on-click #(dispatch [:icon-cut-clicked])
+                 :disabled? (disabled? :cut)]
+
+                [rc/md-circle-icon-button
+                 :md-icon-name "zmdi-delete"
+                 :on-click #(dispatch [:icon-delete-clicked])
+                 :disabled? (disabled? :delete)]]]))
 
 (defn render []
-  (let [pasting? (subscribe [:pasting?])
-        can-undo? (subscribe [:can-undo?])]
+  (let [context-actions? (subscribe [:context-actions?])
+        focus? (subscribe [:focus?])]
     (fn []
-      [circle-controllers {:delete @pasting?
-                           :play @pasting?
-                           :undo @can-undo?}])))
+      [circle-controllers {:plus (not @context-actions?)
+                           :play @context-actions?
+                           :copy @focus?
+                           :cut @focus?
+                           :delete @context-actions?}])))

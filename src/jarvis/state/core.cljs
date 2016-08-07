@@ -6,6 +6,7 @@
 (def schema {:nodes nmap/schema
              :suggestions {s/Str [s/Symbol]}
              :tab s/Keyword ;; TODO one of tabs
+             (s/optional-key :focus) (s/maybe [(s/one s/Num "Node ID") s/Any]) ;; TODO: path instead of s/Any
              (s/optional-key :active) (s/maybe s/Num)
              (s/optional-key :error) (s/maybe js/Error)
              (s/optional-key :modal) (s/maybe s/Bool)
@@ -70,3 +71,10 @@
   (update-in state [:nodes] #(nmap/paste-node % path node-id node)))
 
 (defn pasting? [state] (:pasting state))
+
+(defn context-id [state] (or (:pasting state) (:focus state)))
+(defn context [state]
+  (cond
+    (:pasting state) :pasting
+    (:focus state) :focus
+    :else nil))

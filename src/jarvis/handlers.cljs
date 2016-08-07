@@ -56,7 +56,10 @@
   (register-handler
    :node-clicked
    middlewares
-   r/node-paste-or-cut)
+   (fn [db [node path]]
+     (if (:pasting db)
+       (r/paste-node db [node path])
+       (r/mark-focused db [node path]))))
 
   (register-handler
    :def-clicked
@@ -75,9 +78,28 @@
    :icon-play-clicked
    middlewares
    (fn [db _]
-     (-> db
-         r/eval-pasting
-         (r/switch-to-tab [:eval]))))
+     (let [action (case (st/context db)
+                    :pasting r/eval-pasting
+                    :focus r/eval-focus)]
+       (-> db
+           action
+           (r/switch-to-tab [:eval])))))
+
+  (register-handler
+   :icon-copy-clicked
+   middlewares
+   (fn [db _]
+     (let [[node-id _] (:focus db)]
+       (r/set-pasting db node-id))))
+
+  (register-handler
+   :icon-cut-clicked
+   middlewares
+   (fn [db _]
+     (let [[node-id path] (:focus db)]
+       (-> db
+           (r/cut-node [node-id path])
+           r/unmark-focused))))
 
   (register-handler
    :node-hover
@@ -104,8 +126,15 @@
 
   (register-handler
    :icon-delete-clicked
-   [middlewares (path :pasting)]
-   (constantly nil))
+   middlewares
+   (fn [db _]
+     (let [action (case (st/context db)
+                    :focus #(r/cut-node % (st/context-id db))
+                    identity)]
+       (-> db
+           action
+           (assoc :pasting nil)
+           r/unmark-focused))))
 
   (register-handler
    :icon-undo-clicked
