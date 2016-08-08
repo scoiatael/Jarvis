@@ -50,6 +50,11 @@
                           (update-in converted
                                      [:nmap root] #(conj % index))))))
 
+(defn push-temp-code [state code]
+  (let [nm (:nodes state)
+        [index converted] (nmap/convert nm code)]
+    [(:index index) (assoc-in state [:nodes] converted)]))
+
 (defn inject-code [state old-index code]
   (update-in state
              [:nodes] (fn [nm]

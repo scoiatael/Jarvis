@@ -65,6 +65,10 @@
         (s/update-node id #(walk/with-info % {field false})))))
 
 ;; -- public -------------
+(defn clone-node [db [node]]
+  (let [code (->> node (s/code db) t/strip)]
+    (s/push-temp-code db (ingest-form code))))
+
 (defn paste-node [db [node-id path]]
   (-> (s/paste-node db path node-id (:pasting db))
       (set-pasting nil)))
@@ -123,11 +127,6 @@
                                                         ;; TODO: dialog? message box?
                                                         (util/log! "File saved")))))))
   db)
-
-;; (defn write-file [db [fname contents]]
-;;   (let [fname tmp-file]
-;;     (file/write fname contents #(nrepl/open! fname)))
-;;   db)
 
 (defn push-file [db [contents]]
     (let [parsed (->> contents parser/file (map ingest-form))]

@@ -89,8 +89,11 @@
    :icon-copy-clicked
    middlewares
    (fn [db _]
-     (let [[node-id _] (:focus db)]
-       (r/set-pasting db node-id))))
+     (let [[node-id _] (:focus db)
+           [new-id ndb] (r/clone-node db [node-id])]
+       (-> ndb
+           (r/set-pasting new-id)
+           r/unmark-focused))))
 
   (register-handler
    :icon-cut-clicked
