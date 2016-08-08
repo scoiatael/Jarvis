@@ -22,9 +22,15 @@
 (defn- check-code [code]
   (t/check #(dispatch [:add-error %1 %2]) code))
 
+(defn- start-update-suggestions-for [ns]
+  (nrepl/functions! ns #(dispatch [:add-suggestion ns %])) )
+
 (defn- start-update-suggestions [db]
   (doseq [ns ["user" "clojure.core"]]
-    (nrepl/functions! ns #(dispatch [:add-suggestion ns %]))))
+    (start-update-suggestions-for ns)))
+
+(defn- start-update-user-suggestions! []
+  (start-update-suggestions-for "user"))
 
 (defn- set-error [db err]
   (s/update-fields db [:error] (constantly err)))
@@ -65,6 +71,9 @@
         (s/update-node id #(walk/with-info % {field false})))))
 
 ;; -- public -------------
+(defn switch-to-tab [db [tab]]
+  (assoc-in db [:tab] tab))
+
 (defn clone-node [db [node]]
   (let [code (->> node (s/code db) t/strip)]
     (s/push-temp-code db (ingest-form code))))
@@ -102,7 +111,8 @@
 (defn push-namespaced-fn [db [ns fn]]
   (-> db
       (assoc-in [:modal] nil)
-      (push-code (str ns "/" fn))))
+      (push-code (str ns "/" fn))
+      (switch-to-tab [:edit])))
 
 (def ^:private tmp-file "examples/file1.clj")
 
@@ -140,6 +150,7 @@
   (s/update-node db id #(walk/with-err % err))) 
 
 (defn set-node-eval-info [db [id info]]
+  (start-update-user-suggestions!)
   (s/update-node db id #(walk/with-info % {:eval info}))) 
 
 (defn add-namespace-functions [db [ns ns-funs]]
@@ -148,7 +159,9 @@
 (defn modal->code [db [code]]
   (let [new-db (push-code db code)]
     (if (nil? (:error new-db))
-      (set-modal new-db nil)
+      (-> new-db
+          (set-modal nil)
+          (switch-to-tab [:edit]))
       new-db)))
 
 (defn node-push-scratch [db [node path]]
@@ -185,6 +198,3 @@
         (cut-node node)
         eval-pasting
         unmark-focused)))
-
-(defn switch-to-tab [db [tab]]
-  (assoc-in db [:tab] tab))

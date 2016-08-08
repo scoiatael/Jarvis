@@ -6,8 +6,13 @@
 (defn- nrepl-not-connected []
   [box
    :size "auto"
-   :style {:background-color sol/red}
-   :child [:div "Connecting to nREPL..."]])
+   :style {:background-color sol/orange-alt}
+   :child [h-box
+           :children [[:div "Connecting to nREPL..."]
+                      [rc/throbber
+                       :size :small
+                       :color sol/blue
+                       :style {:height "1em"}]]]])
 
 (defn- nrepl-status [status]
   [box
