@@ -1,0 +1,16 @@
+{
+  "name": "Jarvis",
+  "version": "0.1.0",
+  "description": "Visual Programming Editor for Clojure",
+  "dependencies": {
+    "nrepl-client": "rksm/node-nrepl-client"
+  },
+  "author": "Lukasz Czaplinski",
+  "homepage": "https://scoiatael.github.io/Jarvis",
+  "build": {
+    "appId": "io.github.scoiatael.jarvis",
+    "category": "public.app-category.developer-tools",
+    "win": {
+      "iconUrl": "(windows-only) https link to icon"
+  }
+}

@@ -46,6 +46,12 @@
                 :warnings true
                 :target :nodejs
                 :optimizations :simple}}
+    {:id "release"
+     :source-paths ["src"]
+     :compiler {:output-to "app/js/app.js"
+                :main "jarvis.core"
+                :warnings true
+                :optimizations :simple}}
     {:id "dev"
      :source-paths ["src"]
      :compiler {:main "jarvis.core"

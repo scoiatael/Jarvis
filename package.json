@@ -6,10 +6,10 @@
     "closurecompiler-externs": "^1.0.4",
     "electron-prebuilt": "^1.0.1"
   },
-  "dependencies": {
-    "nrepl-client": "rksm/node-nrepl-client"
-  },
   "scripts": {
-    "start": "electron app/js/main.js"
+    "start": "electron app/js/main.js",
+    "pack": "build --dir",
+    "dist": "build",
+    "postinstall": "install-app-deps"
   }
 }
