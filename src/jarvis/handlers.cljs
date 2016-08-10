@@ -56,12 +56,18 @@
   (register-handler
    :node-clicked
    middlewares
-   r/node-paste-or-cut)
+   (fn [db [node path]]
+     (if (:pasting db)
+       (r/paste-node db [node path])
+       (r/mark-focused db [node path]))))
 
   (register-handler
    :def-clicked
    middlewares
-   r/node-push-scratch)
+   (fn [db ev]
+     (-> db
+         (r/node-push-scratch ev)
+         (r/switch-to-tab [:edit]))))
 
   (register-handler
    :scratch-paster-clicked
@@ -71,7 +77,32 @@
   (register-handler
    :icon-play-clicked
    middlewares
-   r/eval-pasting)
+   (fn [db _]
+     (let [action (case (st/context db)
+                    :pasting r/eval-pasting
+                    :focus r/eval-focus)]
+       (-> db
+           action
+           (r/switch-to-tab [:eval])))))
+
+  (register-handler
+   :icon-copy-clicked
+   middlewares
+   (fn [db _]
+     (let [[node-id _] (:focus db)
+           [new-id ndb] (r/clone-node db [node-id])]
+       (-> ndb
+           (r/set-pasting new-id)
+           r/unmark-focused))))
+
+  (register-handler
+   :icon-cut-clicked
+   middlewares
+   (fn [db _]
+     (let [[node-id path] (:focus db)]
+       (-> db
+           (r/cut-node [node-id path])
+           r/unmark-focused))))
 
   (register-handler
    :node-hover
@@ -98,8 +129,15 @@
 
   (register-handler
    :icon-delete-clicked
-   [middlewares (path :pasting)]
-   (constantly nil))
+   middlewares
+   (fn [db _]
+     (let [action (case (st/context db)
+                    :focus #(r/cut-node % (st/context-id db))
+                    identity)]
+       (-> db
+           action
+           (assoc :pasting nil)
+           r/unmark-focused))))
 
   (register-handler
    :icon-undo-clicked
@@ -112,9 +150,19 @@
    r/open-file)
 
   (register-handler
+   :icon-save-clicked
+   middlewares
+   r/save-file)
+
+  (register-handler
    :namespace-function-clicked
    middlewares
    r/push-namespaced-fn)
+
+  (register-handler
+   :tab-clicked
+   middlewares
+   r/switch-to-tab)
 
   ;; -- Lifecycle Event Handlers
 

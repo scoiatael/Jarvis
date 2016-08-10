@@ -5,6 +5,8 @@
 
 (def schema {:nodes nmap/schema
              :suggestions {s/Str [s/Symbol]}
+             :tab s/Keyword ;; TODO one of tabs
+             (s/optional-key :focus) (s/maybe [(s/one s/Num "Node ID") s/Any]) ;; TODO: path instead of s/Any
              (s/optional-key :active) (s/maybe s/Num)
              (s/optional-key :error) (s/maybe js/Error)
              (s/optional-key :modal) (s/maybe s/Bool)
@@ -12,8 +14,10 @@
              (s/optional-key :nrepl-connection) (s/maybe s/Bool)})
 
 (def ^:constant roots #{:defs :scratch})
+(def ^:constant tabs #{:edit :eval})
 
 (def empty-state {:nodes (reduce #(assoc-in %1 [:nmap %2] '()) nmap/fresh roots)
+                  :tab :edit
                   :suggestions {}})
 
 (defn- nodes [state root]
@@ -46,6 +50,11 @@
                           (update-in converted
                                      [:nmap root] #(conj % index))))))
 
+(defn push-temp-code [state code]
+  (let [nm (:nodes state)
+        [index converted] (nmap/convert nm code)]
+    [(:index index) (assoc-in state [:nodes] converted)]))
+
 (defn inject-code [state old-index code]
   (update-in state
              [:nodes] (fn [nm]
@@ -67,3 +76,10 @@
   (update-in state [:nodes] #(nmap/paste-node % path node-id node)))
 
 (defn pasting? [state] (:pasting state))
+
+(defn context-id [state] (or (:pasting state) (:focus state)))
+(defn context [state]
+  (cond
+    (:pasting state) :pasting
+    (:focus state) :focus
+    :else nil))

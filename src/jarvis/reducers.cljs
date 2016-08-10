@@ -12,7 +12,7 @@
 
 
 ;; -- Helpers ------------
-(defn- set-pasting [db value]
+(defn set-pasting [db value]
   (s/update-fields db [:pasting] (constantly value)))
 
 (defn- ingest-form [form]
@@ -22,9 +22,15 @@
 (defn- check-code [code]
   (t/check #(dispatch [:add-error %1 %2]) code))
 
+(defn- start-update-suggestions-for [ns]
+  (nrepl/functions! ns #(dispatch [:add-suggestion ns %])) )
+
 (defn- start-update-suggestions [db]
   (doseq [ns ["user" "clojure.core"]]
-    (nrepl/functions! ns #(dispatch [:add-suggestion ns %]))))
+    (start-update-suggestions-for ns)))
+
+(defn- start-update-user-suggestions! []
+  (start-update-suggestions-for "user"))
 
 (defn- set-error [db err]
   (s/update-fields db [:error] (constantly err)))
@@ -58,57 +64,85 @@
             #(check-code code)))
   db)
 
-(defn- paste-node [db node-id path]
-  (-> (s/paste-node db path node-id (:pasting db))
-      (set-pasting nil)))
-
-(defn- cut-node [db node-id path]
-  (-> (s/remove-node db path node-id)
-      (set-pasting node-id)))
-
-(defn- unmark [db id]
+(defn- unmark [db id field]
   (if (nil? id)
     db
     (-> db
-        (s/update-fields [:active] #(if (= id %) nil %))
-        (s/update-node id #(walk/with-info % {:marked false})))))
+        (s/update-node id #(walk/with-info % {field false})))))
 
 ;; -- public -------------
+(defn switch-to-tab [db [tab]]
+  (assoc-in db [:tab] tab))
+
+(defn clone-node [db [node]]
+  (let [code (->> node (s/code db) t/strip)]
+    (s/push-temp-code db (ingest-form code))))
+
+(defn paste-node [db [node-id path]]
+  (-> (s/paste-node db path node-id (:pasting db))
+      (set-pasting nil)))
+
+(defn cut-node [db [node-id path]]
+  (-> (s/remove-node db path node-id)
+      (set-pasting node-id)))
+
+(defn mark-focused [db [id path]]
+  (-> db
+      (unmark (-> db :focus first) :focused)
+      (s/update-fields [:focus] (constantly [id path]))
+      (s/update-node id #(walk/with-info % {:focused true}))))
+
+(defn unmark-focused [db]
+  (-> db
+      (unmark (-> db :focus first) :focused)
+      (s/update-fields [:focus] (constantly nil))))
+
 (defn unmark-node [db [id]]
-  (unmark db id))
+  (-> db
+      (s/update-fields [:active] (constantly nil))
+      (unmark id :marked)))
 
 (defn mark-node [db [id]]
   (-> db
-      (unmark (:active db))
+      (unmark (:active db) :marked)
       (s/update-fields [:active] (constantly id))
       (s/update-node id #(walk/with-info % {:marked true}))))
 
 (defn push-namespaced-fn [db [ns fn]]
   (-> db
       (assoc-in [:modal] nil)
-      (push-code (str ns "/" fn))))
+      (push-code (str ns "/" fn))
+      (switch-to-tab [:edit])))
 
 (def ^:private tmp-file "examples/file1.clj")
 
-(defn open-file [db [fname]]
-  (let [fname tmp-file]
-    (file/open fname (fn [contents]
-                       ;; TODO: ensure eval finished before check? show error?
-                       ;; (nrepl/open! fname)
-                       (dispatch [:push-file contents]))))
+(defn open-file [db _]
+  (file/open-file-dialog (fn [fname_arr]
+                           (if-let [fname (first fname_arr)]
+                             ;; TODO: what if not exists?
+                             (file/open fname (fn [contents]
+                                                (ipc/restart-server! (file/dirname fname))
+                                                (dispatch [:push-file contents]))))))
   db)
 
-;; (defn write-file [db [fname contents]]
-;;   (let [fname tmp-file]
-;;     (file/write fname contents #(nrepl/open! fname)))
-;;   db)
+(defn save-file [db _]
+  (file/save-file-dialog (fn [fname]
+                           (when fname
+                             (let [code (->>
+                                         (concat 
+                                          (-> db s/defs t/strip)
+                                          (-> db s/scratch t/strip))
+                                         (clojure.string/join "\n"))]
+                               (file/write fname code (fn []
+                                                        ;; TODO: dialog? message box?
+                                                        (util/log! "File saved")))))))
+  db)
 
 (defn push-file [db [contents]]
     (let [parsed (->> contents parser/file (map ingest-form))]
       ;; TODO: Push to defs?
       (let [new-db (reduce #(s/push-code %1 :scratch %2) s/empty-state parsed)]
         ;; TODO: update only suggestions for user namespace
-        (ipc/restart-server!)
         (start-update-suggestions new-db)
         new-db)))
 
@@ -116,6 +150,7 @@
   (s/update-node db id #(walk/with-err % err))) 
 
 (defn set-node-eval-info [db [id info]]
+  (start-update-user-suggestions!)
   (s/update-node db id #(walk/with-info % {:eval info}))) 
 
 (defn add-namespace-functions [db [ns ns-funs]]
@@ -124,13 +159,10 @@
 (defn modal->code [db [code]]
   (let [new-db (push-code db code)]
     (if (nil? (:error new-db))
-      (set-modal new-db nil)
+      (-> new-db
+          (set-modal nil)
+          (switch-to-tab [:edit]))
       new-db)))
-
-(defn node-paste-or-cut [db [node path]]
-  (if (s/pasting? db)
-    (paste-node db node path)
-    (cut-node db node path)))
 
 (defn node-push-scratch [db [node path]]
   (-> db
@@ -152,10 +184,17 @@
   (start-update-suggestions db)
   db)
 
-(defn eval-pasting [db _]
+(defn eval-pasting [db]
   (let [node (:pasting db)]
     (-> db
         (s/push-node :defs node)
         (clear-node node)
         (eval-node node)
         (set-pasting nil))))
+
+(defn eval-focus [db]
+  (let [node (:focus db)]
+    (-> db
+        (cut-node node)
+        eval-pasting
+        unmark-focused)))

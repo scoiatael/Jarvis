@@ -15,6 +15,23 @@
      (reaction (:pasting @db))))
 
   (register-sub
+   :focus?
+   (fn [db _]
+     (reaction (:focus @db))))
+
+  (register-sub
+   :context-actions?
+   (fn [db _]
+     (reaction (or
+                (:pasting @db)
+                (:focus @db)))))
+
+  (register-sub
+   :tab
+   (fn [db _]
+     (reaction (:tab @db))))
+
+  (register-sub
    :defs
    (fn [db _]
      (reaction (s/defs @db))))

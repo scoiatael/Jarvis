@@ -4,33 +4,17 @@
             [jarvis.views.font :as font]
             [jarvis.views.colors.solarized :as sol]
             [jarvis.util.core :as util]
-            [jarvis.views.scratch :as scratch]
-            [jarvis.views.defs :as defs]
-            [jarvis.views.circle-controllers :as circle-controllers]
+            [jarvis.views.tabs :as tabs]
             [jarvis.views.status-bar :as status-bar]
             [jarvis.views.modal :as modal]
             [jarvis.views.error :as error]))
-
-(defn- main-component []
-  [h-box
-   :style { :height "100%" }
-   :gap "1em"
-   :children [[box
-               :size "1"
-               :child [scratch/render]]
-
-              [circle-controllers/render]
-
-              [box
-               :size "1"
-               :child [defs/render]]]])
 
 (defn main []
   [v-box
    :height "inherit"
    :children [[status-bar/render]
 
-              [main-component]
+              [tabs/render]
 
               [modal/render]
               [error/render]]])

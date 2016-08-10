@@ -3,8 +3,23 @@
             [jarvis.util.logger :as util]))
 
 (def ^:private fs (nodejs/require "fs"))
+(def ^:private path (nodejs/require "path"))
+(def ^:private electron (.-remote (nodejs/require "electron")))
+(def ^:private dialog (.-dialog electron))
 
 (def ^:private initial-contents "")
+(def ^:private open-file-options {:filters [{:name "Clojure" :extensions ["clj" "cljs" "cljc"]},
+                                            {:name "All Files" :extensions ["*"]}]})
+
+(defn open-file-dialog [cb]
+  (.showOpenDialog dialog open-file-options cb))
+
+
+(defn save-file-dialog [cb]
+  (.showSaveDialog dialog open-file-options cb))
+
+(defn dirname [fname]
+  (.dirname path fname))
 
 (defn read [file cb]
   (util/log! "ReadFile: " file)
