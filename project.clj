@@ -4,18 +4,18 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.8.34"]
-                 [org.clojure/core.async "0.2.374"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.9.183"]
+                 [org.clojure/core.async "0.2.385"]
                  [re-com "0.8.3"]
                  [historian "1.1.0"]
                  [re-frame "0.7.0"]
-                 [figwheel "0.5.0-6"]
-                 [prismatic/schema "1.0.5"]
+                 [figwheel "0.5.4-7"]
+                 [prismatic/schema "1.1.3"]
                  [reagent "0.5.1"]
                  [org.clojure/tools.reader "1.0.0-alpha1"]
                  [garden "1.3.2"]
-                 [ring/ring-core "1.4.0"]]
+                 [ring/ring-core "1.5.0"]]
 
   :min-lein-version "2.5.3"
 
@@ -50,8 +50,9 @@
      :source-paths ["src"]
      :compiler {:output-to "app/js/app.js"
                 :main "jarvis.core"
-                :warnings true
-                :optimizations :simple}}
+                :externs ["app/js/externs.js"]
+                :warnings false
+                :optimizations :advanced}}
     {:id "dev"
      :source-paths ["src"]
      :compiler {:main "jarvis.core"
@@ -64,6 +65,6 @@
 
   :profiles
   {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
-                        [figwheel-sidecar "0.5.3"]]
+                        [figwheel-sidecar "0.5.4-7"]]
          :plugins [[lein-figwheel "0.5.0"]
                    [cider/cider-nrepl "0.13.0-SNAPSHOT"]]}})
