@@ -46,7 +46,7 @@
 (defn- with-connection! [cb]
   (let [connection @*connection*]
     (if (nil? connection)
-      (util/error! "No connection to nREPL!")
+      (util/error! "No connection to nREPL!" {})
       (cb connection))))
 
 (defn- eval [conn expr]
@@ -68,7 +68,7 @@
   (eval! `(~'load-file ~file)))
 
 (defn ns! []
-  (util/log! "Requesting current namespace")
+  (util/log! "Requesting current namespace" {})
   (eval! "*ns*"))
 
 (defn doc! [var]

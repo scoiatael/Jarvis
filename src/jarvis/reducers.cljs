@@ -135,7 +135,7 @@
                                          (clojure.string/join "\n"))]
                                (file/write fname code (fn []
                                                         ;; TODO: dialog? message box?
-                                                        (util/log! "File saved")))))))
+                                                        (util/log! "File saved" {:filename fname})))))))
   db)
 
 (defn push-file [db [contents]]

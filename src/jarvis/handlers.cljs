@@ -19,7 +19,7 @@
 
 (def ^:private middlewares
   [
-   (when goog.DEBUG check-schema-mw)
+   (when js/goog.DEBUG check-schema-mw)
    r-f/debug
    r-f/trim-v])
 

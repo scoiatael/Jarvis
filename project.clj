@@ -40,8 +40,8 @@
   :cljsbuild
   {:builds
    [{:id "main"
-     :source-paths ["tools"]
-     :compiler {:output-to "app/js/main.js"
+     :source-paths ["tools" "src"]
+     :compiler {:output-to "app/index.js"
                 :main "app.core"
                 :warnings true
                 :target :nodejs

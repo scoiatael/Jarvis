@@ -78,10 +78,10 @@
 (defn- arguments-or-error [value pos]
   (let [arg-array (nth value pos :not-found)]
     (if (= arg-array :not-found)
-      (util/error! value pos {:error :not-found})
+      (util/error! "Error: not found" {:value value :pos pos})
       (if-let [args (-> arg-array walk/value)]
         {:arguments args}
-        (util/error! value pos arg-array {:error :not-an-array})))))
+        (util/error! "Error: not-an-array" {:value value :pos pos :arg-array arg-array})))))
 
 (defn- scope-of-let [root-scope value]
   (if-let [arguments (:arguments (arguments-or-error value 1))]

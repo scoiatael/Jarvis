@@ -29,7 +29,7 @@
 
 (defn log-type [value]
   (let [type (simple-type value)]
-    (util/log! value "->" type)
+    (util/log! "Type: " {:value  value :type type})
     type))
 
 (defn annotate-type [code]

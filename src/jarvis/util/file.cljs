@@ -26,14 +26,14 @@
   (.readFile fs file "utf8" (fn [err data]
                               (if (nil? err)
                                 (cb data)
-                                (util/error! err)))))
+                                (util/error! ".readFile error:" err)))))
 
 (defn write [file contents cb]
   (util/log! "WriteFile: " file)
   (.writeFile fs file contents (fn [err]
                                  (if (nil? err)
                                    (cb)
-                                   (util/error! err)))))
+                                   (util/error! ".writeFile error:" err)))))
 
 (defn open [file cb]
   (util/log! "OpenFile: " file)

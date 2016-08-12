@@ -31,7 +31,7 @@
   (.on ipc/renderer "server-started"
          (fn [srv] (nrepl/connect-to-server
                    (fn []
-                     (util/log! "Connected to nREPL")
+                     (util/log! "Connected to nREPL" {})
                      (r-f/dispatch [:repl-connected])))))
 
   (mount-root)

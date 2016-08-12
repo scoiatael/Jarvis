@@ -1,8 +1,9 @@
 (ns app.core
   (:require [cljs.nodejs :as nodejs]
-            [app.util :as util]
+            [jarvis.util.core :as util]
             [app.ipc :as ipc]
-            [app.nrepl :as nrepl]))
+            [app.nrepl :as nrepl]
+            [app.menu :as menu]))
 
 (def path (nodejs/require "path"))
 
@@ -60,12 +61,12 @@
   ; ready listener
    (.on app "ready"
      (fn []
-       (reset! *win* (BrowserWindow. (clj->js {:fullscreen true :title "Jarvis"})))
+       (menu/init)
 
-       (.loadURL @*win* (str "file://" (.resolve path (js* "__dirname") "../index.html")))
+       (reset! *win* (BrowserWindow. (clj->js {:title "Jarvis"})))
+
+       (.loadURL @*win* (str "file://" (.resolve path (js* "__dirname") "index.html")))
 
        (.on @*win* "closed" (fn [] (reset! *win* nil))))))
-
-(nodejs/enable-util-print!)
 
 (set! *main-cli-fn* -main)

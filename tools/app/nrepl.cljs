@@ -1,20 +1,20 @@
 (ns app.nrepl
   (:require [cljs.nodejs :as nodejs]
-            [app.util :as util]))
+            [jarvis.util.core :as util]))
 
-;; (def ^:private Server (nodejs/require "nrepl-client/nrepl-server"))
 (def ^:private Server
   (-> (.resolve nodejs/require "nrepl-client")
       (.replace "nrepl-client.js" "nrepl-server.js")
       (nodejs/require)))
+
+(def ^:private tree-kill (nodejs/require "tree-kill"))
 
 (def ^:private port 31339)
 
 (def *server-options* (atom {:verbose true
                              ;; TODO Use non-constant port number
                              :port port
-                             ;; TODO Find better tmp path
-                             :projectPath "examples"}))
+                             :projectPath (.tmpdir (nodejs/require "os"))}))
 
 (def ^:private *server* (atom nil))
 (def ^:private *server-starting* (atom false))
@@ -55,15 +55,16 @@
 (defn launch! [opts cb] (launch-server opts cb))
 
 (defn kill! [cb]
-  (let [server @*server*]
+  (let [server @*server*
+        pid (-> server .-proc .-pid)
+        sig "SIGKILL"]
     (if (server-present?)
-      (.stop Server server (fn [err]
-                             (reset! *server* nil)
-                             (util/log! "nREPL killed")
-                             (if-not (nil? err)
-                               (util/error! "nREPL kill error:" err)
-                               (cb {:was-running? true
-                                    :is-starting? @*server-starting*}))))
+      (do
+        (util/log! "Killing REPL with " {:sig sig :pid pid})
+        (tree-kill pid sig)
+        (reset! *server* nil)
+        (cb {:was-running? true
+             :is-starting? @*server-starting*}))
       (do
         (util/error! "nREPL not launched")
         (cb {:was-running? false
