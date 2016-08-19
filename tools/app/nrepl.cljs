@@ -1,5 +1,6 @@
 (ns app.nrepl
   (:require [cljs.nodejs :as nodejs]
+            [app.dialog :as dialog]
             [jarvis.util.core :as util]))
 
 (def ^:private Server
@@ -33,11 +34,12 @@
                                    (reset! *server-starting* true)
                                    (.start Server (server-options opts)
                                            (fn [err serv]
-                                             (if-not (nil? err) (util/error! "nREPL start error: " err)
-                                                     (do
-                                                       (reset! *server-starting* false)
-                                                       (reset! *server* serv)
-                                                       (cb (server!)))))))
+                                             (if-not (nil? err)
+                                               (dialog/nrepl-error! err)
+                                               (do
+                                                 (reset! *server-starting* false)
+                                                 (reset! *server* serv)
+                                                 (cb (server!)))))))
                                  ;; TODO: handle timed out or dead server
                                  (cb (server!))))
 
