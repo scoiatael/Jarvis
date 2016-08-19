@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "description": "Visual Programming Editor for Clojure",
   "dependencies": {
-    "nrepl-client": "rksm/node-nrepl-client",
-    "tree-kill": "^1.1.0",
+    "nrepl-client": "scoiatael/node-nrepl-client",
     "winston": "^2.2.0"
   },
   "author": {

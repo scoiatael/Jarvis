@@ -9,17 +9,17 @@
 
 (defonce ^:private *connection* (atom nil))
 
-(def ^:private port 31339)
-
 (def ^:private debug-connection false)
 
 (def ^:private connection-options {:host "127.0.0.1"
-                                   :port port
                                    :verbose debug-connection})
 
-(defn- connect-to-server [cb]
-  (reset! *connection* (.connect Client (clj->js connection-options)))
-  (.once @*connection* "connect" cb))
+(defn- connect-to-server [s cb]
+  (let [port (:port s)
+        options (assoc connection-options :port port)]
+    (util/log! "Connecting to nrepl" options)
+    (reset! *connection* (.connect Client (clj->js options)))
+    (.once @*connection* "connect" cb)))
 
 (defn extract-values [res]
   (let [val (.-value (aget res 0))

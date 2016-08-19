@@ -15,13 +15,14 @@
 
 (def *win* (atom nil))
 
-(defn -main []
+(defn ^:export -main []
   (util/log! "Starting up..")
 
   (.on ipc/main "start-server"
        (fn [ev arg]
          (nrepl/launch! {}
-                        (partial ipc/reply! ev "server-started"))))
+                        (fn [srv]
+                          (ipc/reply! ev "server-started" srv)))))
 
   (.on ipc/main "kill-server"
        (fn [ev arg]
@@ -37,7 +38,8 @@
              (ipc/reply! ev "server-killed" {})
              (if-not (:is-starting? %)
                (nrepl/launch! {}
-                              (partial ipc/reply! ev "server-started")))))))
+                              (fn [srv]
+                                (ipc/reply! ev "server-started" srv))))))))
 
   ;; error listener
   (.on nodejs/process "error"

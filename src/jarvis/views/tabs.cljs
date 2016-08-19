@@ -26,7 +26,6 @@
   (let [tab (subscribe [:tab])]
     (fn []
       [v-box
-       :style { :height "100%" }
        :gap "1em"
        :children (if @tab
                    [[tabs @tab]

@@ -7,34 +7,48 @@
     [v-box
      :children [[rc/md-circle-icon-button
                  :md-icon-name "zmdi-plus"
+                 :tooltip "Add element"
+                 :tooltip-position :right-below
                  :on-click #(dispatch [:icon-plus-clicked])
                  :disabled? (disabled? :plus)]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-file-text"
+                 :tooltip "Open file"
+                 :tooltip-position :right-below
                  :on-click #(dispatch [:icon-file-clicked])]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-archive"
+                 :tooltip "Save file"
+                 :tooltip-position :right-below
                  :on-click #(dispatch [:icon-save-clicked])]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-play"
+                 :tooltip "Eval"
+                 :tooltip-position :right-below
                  :on-click #(dispatch [:icon-play-clicked])
                  :disabled? (disabled? :play)]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-copy"
+                 :tooltip "Copy"
+                 :tooltip-position :right-below
                  :on-click #(dispatch [:icon-copy-clicked])
                  :disabled? (disabled? :copy)]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-swap"
+                 :tooltip "Cut"
+                 :tooltip-position :right-below
                  :on-click #(dispatch [:icon-cut-clicked])
                  :disabled? (disabled? :cut)]
 
                 [rc/md-circle-icon-button
                  :md-icon-name "zmdi-delete"
+                 :tooltip "Delete"
+                 :tooltip-position :right-below
                  :on-click #(dispatch [:icon-delete-clicked])
                  :disabled? (disabled? :delete)]]]))
 

@@ -6,6 +6,7 @@
 
 (def error! logger/error!)
 (def log! logger/log!)
+(def logger logger/logger)
 
 (defn- update-field [struct tuple]
   (let [field (first tuple)

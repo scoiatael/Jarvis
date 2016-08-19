@@ -3,30 +3,20 @@
             [jarvis.util.core :as util]))
 
 (def ^:private Server
-  (-> (.resolve nodejs/require "nrepl-client")
-      (.replace "nrepl-client.js" "nrepl-server.js")
-      (nodejs/require)))
-
-(def ^:private tree-kill (nodejs/require "tree-kill"))
-
-(def ^:private port 31339)
+  (-> "nrepl-client"
+      nodejs/require
+      .-Server))
 
 (def *server-options* (atom {:verbose true
-                             ;; TODO Use non-constant port number
-                             :port port
+                             :logger util/logger
                              :projectPath (.tmpdir (nodejs/require "os"))}))
 
 (def ^:private *server* (atom nil))
 (def ^:private *server-starting* (atom false))
 
 (defn- server-js->clj [srv]
-  ;; srv == {proc: PROCESS, hostname: STRING, port: NUMBER, started: BOOL, exited: BOOL, timedout: BOOL}
-  {:hostname (.-hostname srv)
-   :port (.-port srv)
-   :started (.-started srv)
-   :exited (.-exited srv)
-   :timedout (.-timedout srv)
-   })
+  {:hostname (.-host srv)
+   :port (.-port srv)})
 
 (defn- server-options [opts]
   (-> @*server-options*
@@ -38,7 +28,7 @@
 
 (defn server-present? [] (not (nil? @*server*)))
 
-(defn- launch-server [opts cb] (if-not (server-present?)
+(defn launch! [opts cb] (if-not (server-present?)
                                  (do
                                    (reset! *server-starting* true)
                                    (.start Server (server-options opts)
@@ -51,20 +41,14 @@
                                  ;; TODO: handle timed out or dead server
                                  (cb (server!))))
 
-
-(defn launch! [opts cb] (launch-server opts cb))
-
 (defn kill! [cb]
-  (let [server @*server*
-        pid (-> server .-proc .-pid)
-        sig "SIGKILL"]
+  (let [server @*server*]
     (if (server-present?)
       (do
-        (util/log! "Killing REPL with " {:sig sig :pid pid})
-        (tree-kill pid sig)
         (reset! *server* nil)
-        (cb {:was-running? true
-             :is-starting? @*server-starting*}))
+        (.stop server
+               #(cb {:was-running? true
+                    :is-starting? @*server-starting*})))
       (do
         (util/error! "nREPL not launched")
         (cb {:was-running? false

@@ -16,6 +16,8 @@
 (when js/goog.DEBUG
   (.add winston Console))
 
+(def logger winston)
+
 (defn log [level msg meta] (.log winston level msg (clj->js meta)))
 
 (defn error! [msg meta] (log "error" msg meta))

@@ -29,10 +29,11 @@
   (goog.style/installStyles app/styles)
 
   (.on ipc/renderer "server-started"
-         (fn [srv] (nrepl/connect-to-server
-                   (fn []
-                     (util/log! "Connected to nREPL" {})
-                     (r-f/dispatch [:repl-connected])))))
+       (fn [ev srv]
+         (nrepl/connect-to-server {:port (.-port srv) :host (.-host srv)}
+                                  (fn []
+                                    (util/log! "Connected to nREPL" {})
+                                    (r-f/dispatch [:repl-connected])))))
 
   (mount-root)
   (ipc/start-server!))
