@@ -7,11 +7,20 @@
   "scripts": {
     "start": "electron app/",
     "pack": "build --dir",
-    "dist": "build",
+    "dist": "build -mwl",
     "postinstall": "install-app-deps"
   },
   "build": {
     "appId": "io.github.scoiatael.jarvis",
-    "category": "public.app-category.developer-tools"
+    "category": "public.app-category.developer-tools",
+    "linux": {
+      "target": [
+        "deb",
+        "rpm",
+        "pacman",
+        "apk",
+        "AppImage"
+      ]
+    }
   }
 }
