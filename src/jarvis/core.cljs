@@ -35,8 +35,7 @@
                                     (util/log! "Connected to nREPL" {})
                                     (r-f/dispatch [:repl-connected])))))
 
-  (mount-root)
-  (ipc/start-server!))
+  (mount-root))
 
 (when js/goog.DEBUG
   (fw/watch-and-reload

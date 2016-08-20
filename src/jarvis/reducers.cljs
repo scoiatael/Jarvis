@@ -114,15 +114,14 @@
       (push-code (str ns "/" fn))
       (switch-to-tab [:edit])))
 
-(def ^:private tmp-file "examples/file1.clj")
-
 (defn open-file [db _]
   (file/open-file-dialog (fn [fname_arr]
                            (if-let [fname (first fname_arr)]
-                             ;; TODO: what if not exists?
-                             (file/open fname (fn [contents]
-                                                (ipc/restart-server! (file/dirname fname))
-                                                (dispatch [:push-file contents]))))))
+                             (let [dirname (file/dirname fname)]
+                               ;; TODO: what if not exists?
+                               (file/open fname (fn [contents]
+                                                  (ipc/restart-server! dirname)
+                                                  (dispatch [:push-file contents dirname])))))))
   db)
 
 (defn save-file [db _]
@@ -138,13 +137,13 @@
                                                         (util/log! "File saved" {:filename fname})))))))
   db)
 
-(defn push-file [db [contents]]
+(defn push-file [db [contents dirname]]
     (let [parsed (->> contents parser/file (map ingest-form))]
       ;; TODO: Push to defs?
       (let [new-db (reduce #(s/push-code %1 :scratch %2) s/empty-state parsed)]
         ;; TODO: update only suggestions for user namespace
         (start-update-suggestions new-db)
-        new-db)))
+        (assoc new-db :server-path dirname))))
 
 (defn set-node-error [db [id err]]
   (s/update-node db id #(walk/with-err % err))) 
@@ -178,7 +177,13 @@
         (set-pasting nil))))
 
 (defn initialise-db [_ _]
+  (ipc/start-server!)
   s/empty-state)
+
+(defn restart-repl! [db _]
+  (let [dirname (:server-path db)]
+    (ipc/restart-server! dirname))
+  (dissoc db :nrepl-connection))
 
 (defn update-suggestions [db _]
   (start-update-suggestions db)

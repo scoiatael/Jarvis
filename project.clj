@@ -20,7 +20,8 @@
   :min-lein-version "2.5.3"
 
   :plugins [[lein-cljsbuild "1.1.2"]
-            [lein-externs "0.1.3"]]
+            [lein-externs "0.1.3"]
+            [lein-figwheel "0.5.4-7"]]
 
   :clean-targets [:target-path
                   "app/js/out"
@@ -28,10 +29,6 @@
                   "app/js/front.js"
                   "figwheel_server.log"
                   "npm-debug.log"]
-
-  :figwheel {:http-server-root "app"
-             :port 3449
-             :ring-handler figwheel-middleware/app}
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
@@ -55,6 +52,7 @@
                 :optimizations :advanced}}
     {:id "dev"
      :source-paths ["src"]
+     :figwheel true
      :compiler {:main "jarvis.core"
                 :output-to "app/js/app.js"
                 :output-dir "app/js/compiled/out"

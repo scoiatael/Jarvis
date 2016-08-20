@@ -155,6 +155,11 @@
    r/save-file)
 
   (register-handler
+   :icon-restart-clicked
+   middlewares
+   r/restart-repl!)
+
+  (register-handler
    :namespace-function-clicked
    middlewares
    r/push-namespaced-fn)

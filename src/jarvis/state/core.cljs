@@ -6,6 +6,7 @@
 (def schema {:nodes nmap/schema
              :suggestions {s/Str [s/Symbol]}
              :tab s/Keyword ;; TODO one of tabs
+             (s/optional-key :server-path) s/Str
              (s/optional-key :focus) (s/maybe [(s/one s/Num "Node ID") s/Any]) ;; TODO: path instead of s/Any
              (s/optional-key :active) (s/maybe s/Num)
              (s/optional-key :error) (s/maybe js/Error)

@@ -50,14 +50,23 @@
                  :tooltip "Delete"
                  :tooltip-position :right-below
                  :on-click #(dispatch [:icon-delete-clicked])
-                 :disabled? (disabled? :delete)]]]))
+                 :disabled? (disabled? :delete)]
+
+                [rc/md-circle-icon-button
+                 :md-icon-name "zmdi-replay"
+                 :tooltip "Restart nREPL"
+                 :tooltip-position :right-below
+                 :on-click #(dispatch [:icon-restart-clicked])
+                 :disabled? (disabled? :restart)]]]))
 
 (defn render []
   (let [context-actions? (subscribe [:context-actions?])
+        server-started? (subscribe [:status])
         focus? (subscribe [:focus?])]
     (fn []
       [circle-controllers {:plus (not @context-actions?)
                            :play @context-actions?
                            :copy @focus?
                            :cut @focus?
+                           :restart (-> @server-started? first nil? not)
                            :delete @context-actions?}])))

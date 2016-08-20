@@ -40,7 +40,7 @@
                                                  (reset! *server-starting* false)
                                                  (reset! *server* serv)
                                                  (cb (server!)))))))
-                                 ;; TODO: handle timed out or dead server
+                                 ;; TODO: handle dead server
                                  (cb (server!))))
 
 (defn kill! [cb]

@@ -15,6 +15,13 @@
   (fn-arity [this fn-name cb])
   (var-defined? [this var cb]))
 
+(def ^:private ^:const special-keywords
+  {'def 2})
+
+(defn special-keywords-cb [keyword cb]
+  (if-let [val (special-keywords keyword)]
+    (or (cb val) true)))
+
 (def ^:const global-vars
   (into keyword-introducing-scope #{'def
                                     '+
@@ -28,7 +35,7 @@
 
 (defrecord RootScope []
   Scope
-  (fn-arity [this fn-name cb] (nrepl/fn-arity fn-name cb))
+  (fn-arity [this fn-name cb] (or (special-keywords-cb fn-name cb) (nrepl/fn-arity fn-name cb)))
   (var-defined? [this var cb] (nrepl/var-defined? var cb)))
 
 (defrecord EmptyScope []
