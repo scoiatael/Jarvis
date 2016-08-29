@@ -18,7 +18,7 @@ const iconFor = (ext) => {
     case "AppImage":
       return "linux";
     case "apk":
-      return "android";
+      return "linux";
     case "deb":
       return "linux";
     case "dmg":
