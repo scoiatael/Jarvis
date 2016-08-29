@@ -37,7 +37,7 @@ const Asset = ({assetData}) => {
   let icon = iconFor(assetData.name.split(".").pop());
   let className = `fa fa-${icon} fa-2x`;
   return (
-    <p><i className={className} style={{"padding-right": "0.5em"}}></i><a href={assetData.url}>{assetData.name}</a></p>
+    <p><i className={className} style={{"padding-right": "0.5em"}}></i><a href={assetData.browser_download_url}>{assetData.name}</a></p>
   )
 }
 
