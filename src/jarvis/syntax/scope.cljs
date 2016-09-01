@@ -16,17 +16,19 @@
   (var-defined? [this var cb]))
 
 (def ^:private ^:const special-keywords
-  {'def 2})
+  {'def 2
+   'if  3})
 
 (defn special-keywords-cb [keyword cb]
   (if-let [val (special-keywords keyword)]
     (or (cb val) true)))
 
 (def ^:const global-vars
-  (into keyword-introducing-scope #{'def
-                                    '+
-                                    '-
-                                    '=}))
+  (-> keyword-introducing-scope
+      (into #{'+
+              '-
+              '=})
+      (into (keys special-keywords))))
 
 (defn- list-contains? [list elem]
   (if (seqable? list)
@@ -63,7 +65,7 @@
   (var-defined? [this var cb]
     (if (-> (->> this bindings-let (map list->fn-name)) (list-contains? var))
       (cb true)
-      (do 
+      (do
         ;; (util/error! var "not found in" this (->> this bindings-let (map list->fn-name)))
         (var-defined? (:root this) var cb)))))
 
